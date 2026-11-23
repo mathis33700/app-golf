@@ -27,3 +27,6 @@ desktop.ini
 
 # Notes de projet perso (prenom, golfs habituels) : non publiees
 CLAUDE.md
+
+# Donnees OSM brutes telechargees par tools/osm-fetch.js
+tools/osm-raw/

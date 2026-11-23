@@ -39,6 +39,7 @@ h3{font-size:16px;margin:0 0 8px}
 .hero .k{color:var(--y)}
 p{margin:0 0 10px}
 small,.mute{color:var(--mute);font-size:13px}
+a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 16px;border-radius:12px;border:0;background:var(--g2);color:#fff;font-size:16px;font-weight:600;cursor:pointer}
 .btn.y{background:var(--y);color:#1b1b1b}
 .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
@@ -166,6 +167,8 @@ const teeHex = c => TEE[c] || '#999';
 const DEFAULT_CLUBS = [['Driver',220],['Bois 3',200],['Hybride',185],['Fer 5',170],['Fer 6',160],['Fer 7',150],['Fer 8',140],['Fer 9',128],['PW',115],['GW',100],['SW',85],['LW',65],['Putter',0]];
 const JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const CATALOG = 'golfs-gironde.json'; // parcours prepares a partir d'OpenStreetMap, servis avec l'app
+const OSM_CREDIT = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contributeurs OpenStreetMap</a>';
 
 /* ---------- stockage local (IndexedDB) ---------- */
 const Store = {
@@ -867,12 +870,37 @@ G.updateCalib = async () => {
 /* ---------- parcours ---------- */
 V.courses = () => {
   let h = `<section class="card"><div class="grid2"><button class="btn" onclick="G.nearby()">Golfs autour de moi</button><button class="btn ghost" onclick="G.newCourse()">Créer à la main</button></div>
-    <p class="mute" style="margin:10px 0 0">Les golfs viennent d'OpenStreetMap (données libres). Complète ensuite avec une photo de la carte de score.</p></section>`;
+    <p class="mute" style="margin:10px 0 0">Les golfs viennent d'OpenStreetMap (données libres, ${OSM_CREDIT}). Complète ensuite avec une photo de la carte de score.</p></section>`;
   h += `<section class="card"><h3>Mes parcours</h3>` + (S.courses.length ? `<div class="list">${S.courses.map(c => {
     const gps = c.holes.filter(x => x.green).length;
     return `<a href="#" onclick="G.go('course','${c.id}');return false"><span><b>${esc(c.name)}</b><br><small>${c.holes.length} trous · par ${coursePar(c)} · greens GPS ${gps}/${c.holes.length}</small></span><span class="row">${c.tees.map(t => `<span class="dot" style="background:${teeHex(t.color)}"></span>`).join('')}</span></a>`;
   }).join('')}</div>` : '<p class="mute">Aucun parcours pour le moment.</p>') + `</section>`;
+  h += `<section class="card" id="catalog"><h3>Golfs déjà préparés</h3><p class="mute">Chargement...</p></section>`;
   return h;
+};
+let catalog = null;
+async function loadCatalog() {
+  if (!catalog) { const r = await fetch(CATALOG); if (!r.ok) throw new Error('catalogue indisponible'); catalog = await r.json(); }
+  return catalog;
+}
+AFTER.courses = async () => {
+  let cat;
+  try { cat = await loadCatalog(); } catch (e) { const el = $('#catalog'); if (el) el.innerHTML = '<h3>Golfs déjà préparés</h3><p class="mute">Catalogue indisponible hors ligne tant que l\'app n\'a pas été ouverte une fois avec du réseau.</p>'; return; }
+  const el = $('#catalog'); if (!el) return;
+  const near = GPS.pos ? c => hav(GPS.pos, c) : () => null;
+  const list = cat.courses.map((c, k) => ({c, k, d: c.lat ? near(c) : null})).sort((a, b) => (a.d ?? 1e12) - (b.d ?? 1e12) || a.c.name.localeCompare(b.c.name));
+  el.innerHTML = `<h3>Golfs déjà préparés</h3><p class="mute">Trous, départs et greens positionnés d'après OpenStreetMap. Pas besoin de réseau pour les ajouter.</p><div class="list">${list.map(({c, k, d}) => {
+    const have = S.courses.find(x => x.osmRef === c.osmRef);
+    const est = c.draft && (c.draft.parEst || c.draft.hcpMissing) ? ' · par à vérifier' : '';
+    return `<div class="item"><span><b>${esc(c.name)}</b><br><small>${esc(c.city)} · ${c.holes.length} trous · par ${coursePar(c)}${est}${d != null ? ' · ' + (d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(0) + ' km') : ''}</small></span>${have ? '<span class="chip">Ajouté</span>' : `<button class="btn sm" onclick="G.addCatalog(${k})">Ajouter</button>`}</div>`;
+  }).join('')}</div><p class="mute" style="margin:8px 0 0">Données ${OSM_CREDIT}, ${esc(cat.date)}.</p>`;
+};
+G.addCatalog = async k => {
+  const src = (await loadCatalog()).courses[k];
+  if (S.courses.find(x => x.osmRef === src.osmRef)) return toast('Déjà dans tes parcours');
+  const c = JSON.parse(JSON.stringify(src)); c.id = uid();
+  S.courses.push(c); await save.courses();
+  toast(c.name + ' ajouté'); go('course', {id: c.id});
 };
 function blankHoles(n) { return Array.from({length: n}, (_, i) => ({n: i + 1, par: 4, hcp: null, dist: {}, tee: null, green: null, photo: null, calib: null})); }
 G.newCourse = async () => {
@@ -904,7 +932,7 @@ G.nearby = async () => {
       const have = S.courses.find(c => c.name === g.name);
       return `<div class="item"><span><b>${esc(g.name)}</b><br><small>${(g.d / 1000).toFixed(1)} km${g.city ? ' · ' + esc(g.city) : ''}</small></span>${have ? '<span class="chip">Déjà ajouté</span>' : `<button class="btn sm" onclick="G.addOsmGolf(${k})">Ajouter</button>`}</div>`;
     }).join('')}</div><button class="btn ghost wide" style="margin-top:12px" onclick="G.closeModal()">Fermer</button>`);
-  } catch (e) { modal(`<h3>Recherche impossible</h3><p>${esc(e.message)}</p><button class="btn wide" onclick="G.closeModal()">OK</button>`); }
+  } catch (e) { modal(`<h3>Recherche impossible</h3><p>${esc(e.message)}</p><p class="mute">Les serveurs OpenStreetMap sont parfois saturés. Les golfs déjà préparés restent disponibles en bas de l'onglet Parcours.</p><button class="btn wide" onclick="G.closeModal()">OK</button>`); }
 };
 G.addOsmGolf = async k => {
   const g = window._golfs[k];
@@ -929,30 +957,39 @@ async function importOsm(c) {
     else if (gt === 'water_hazard' || gt === 'lateral_water_hazard' || t.natural === 'water') type = 'water';
     if (type) features.push({t: type, p: simp(w.geometry)});
   }
-  let holes = ways.filter(w => w.tags && w.tags.golf === 'hole' && parseInt(w.tags.ref) > 0);
-  const groupKey = w => w.tags['golf:course:name'] || w.tags['golf:course'] || '';
-  const refs = holes.map(w => parseInt(w.tags.ref));
+  // numero du trou : "5", "Trou 5" ou "18 trous - 5" (Gujan) ; le prefixe sert de nom de parcours
+  const refNum = s => { const m = String(s || '').match(/(\d+)\s*$/); return m ? +m[1] : 0; };
+  const refGroup = s => { const m = String(s || '').match(/^(.*?)[\s\-:]+\d+\s*$/); return m ? m[1].trim() : ''; };
+  let holes = ways.filter(w => w.tags && w.tags.golf === 'hole' && refNum(w.tags.ref) > 0);
+  const groupKey = w => w.tags['golf:course:name'] || w.tags['golf:course'] || refGroup(w.tags.ref);
+  const refs = holes.map(w => refNum(w.tags.ref));
   if (new Set(refs).size < refs.length) {
     // plusieurs parcours sur le site : on garde le groupe dont le nom colle, sinon les trous les plus proches
     const groups = {}; holes.forEach(w => (groups[groupKey(w)] = groups[groupKey(w)] || []).push(w));
     const names = Object.keys(groups).filter(Boolean);
     const match = names.find(n => c.name.toLowerCase().includes(n.toLowerCase()) || n.toLowerCase().includes(c.name.toLowerCase()));
     if (match) holes = groups[match];
+    else if (names.length > 1) holes = groups[names.sort((a, b) => groups[b].length - groups[a].length)[0]]; // le plus grand parcours du site
     else {
       const best = {};
-      holes.forEach(w => { const r = parseInt(w.tags.ref), d = hav({lat: w.geometry[0].lat, lng: w.geometry[0].lon}, ce); if (!best[r] || d < best[r].d) best[r] = {w, d}; });
+      holes.forEach(w => { const r = refNum(w.tags.ref), d = hav({lat: w.geometry[0].lat, lng: w.geometry[0].lon}, ce); if (!best[r] || d < best[r].d) best[r] = {w, d}; });
       holes = Object.values(best).map(o => o.w);
     }
   }
   c.osm = {features, date: new Date().toISOString()};
   if (!holes.length) return `Aucun trou tracé sur OpenStreetMap pour ce golf (${features.filter(f => f.t === 'green').length} greens dessinés). Les positions se rempliront pendant tes parties.`;
-  const n = Math.min(18, Math.max(...holes.map(w => parseInt(w.tags.ref))));
+  const n = Math.min(18, Math.max(...holes.map(w => refNum(w.tags.ref))));
   const N = n <= 9 ? 9 : 18;
   if (c.holes.length !== N) { const old = c.holes; c.holes = blankHoles(N).map((h, i) => old[i] ? {...old[i], n: i + 1} : h); }
+  const greens = features.filter(f => f.t === 'green').map(f => ({lat: mean(f.p.map(p => p[0])), lng: mean(f.p.map(p => p[1]))}));
+  const toGreen = q => Math.min(...greens.map(gc => hav({lat: q.lat, lng: q.lon}, gc)));
   let cnt = 0;
   for (const w of holes) {
-    const k = parseInt(w.tags.ref) - 1; if (k >= N) continue;
-    const h = c.holes[k], g = w.geometry;
+    const k = refNum(w.tags.ref) - 1; if (k >= N) continue;
+    let g = w.geometry;
+    // le trace va normalement du depart au green ; on le retourne s'il a ete dessine a l'envers
+    if (greens.length >= holes.length / 2 && toGreen(g[0]) + 5 < toGreen(g[g.length - 1])) g = g.slice().reverse();
+    const h = c.holes[k];
     h.tee = {lat: g[0].lat, lng: g[0].lon}; h.green = {lat: g[g.length - 1].lat, lng: g[g.length - 1].lon};
     if (w.tags.par) h.par = parseInt(w.tags.par) || h.par;
     if (w.tags.handicap) h.hcp = parseInt(w.tags.handicap) || h.hcp;
@@ -971,6 +1008,7 @@ V.course = ({id}) => {
     <div class="grid2"><label class="f">Ville<input value="${esc(c.city)}" onchange="G.cset('${id}','city',this.value)"></label>
     <label class="f">Trous<select onchange="G.nholes('${id}',this.value)"><option ${c.holes.length === 18 ? 'selected' : ''}>18</option><option ${c.holes.length === 9 ? 'selected' : ''}>9</option></select></label></div>
     <p class="mute" style="margin:0">${c.lat ? 'Repère GPS enregistré : le parcours sera proposé automatiquement.' : 'Repère GPS enregistré au premier départ.'}</p></section>
+  ${c.draft && (c.draft.parEst || c.draft.hcpMissing) ? `<div class="warn">Parcours importé d'OpenStreetMap : ${c.draft.parEst ? 'par estimé d\'après la longueur des trous, ' : ''}${c.draft.hcpMissing ? 'index des trous manquants, ' : ''}distances mesurées sur la carte (départ Jaune provisoire). Photographie la carte de score ou corrige à la main avant de jouer.</div>` : ''}
   <section class="card"><h3>Remplir automatiquement</h3><div class="grid2"><button class="btn y" onclick="G.cardStart('${id}')">Photo de la carte</button><button class="btn ghost" onclick="G.reOsm('${id}')">Import OSM</button></div>
     <p class="mute" style="margin:8px 0 0">Recto et verso possibles. Tu vérifies tout avant de jouer.</p></section>`;
   h += `<section class="card"><h3>Départs</h3><div class="scroll"><table><thead><tr><th class="l">Couleur</th><th>Slope</th><th>SSS</th><th>Par</th><th></th></tr></thead><tbody>${c.tees.map((t, k) => `<tr>
@@ -1045,6 +1083,7 @@ G.cardFiles = async input => {
 function applyCard(c, d) {
   const normCol = s => { if (!s) return null; const k = String(s).trim(); const cap = k.charAt(0).toUpperCase() + k.slice(1).toLowerCase(); return TEE[cap] ? cap : TEE_EN[k.toLowerCase()] || null; };
   if (d.name && (!c.name || c.name === 'Nouveau parcours')) c.name = d.name;
+  delete c.draft; // les valeurs viennent maintenant de la vraie carte
   const H = (d.holes || []).filter(h => h && h.n >= 1 && h.n <= 18);
   if (H.length) {
     const N = Math.max(...H.map(h => h.n)) > 9 ? 18 : 9;
