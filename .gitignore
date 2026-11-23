@@ -1,0 +1,29 @@
+# Version demo generee a partir de index.html (voir CLAUDE.md)
+demo/
+
+# Sauvegardes exportees depuis l'app (donnees perso, cle API possible)
+caddie-sauvegarde-*.json
+
+# Tests Playwright et captures
+node_modules/
+test-results/
+playwright-report/
+screenshots/
+*.log
+
+# Secrets
+.env
+.env.*
+
+# Netlify CLI
+.netlify/
+
+# Systeme et editeurs
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Notes de projet perso (prenom, golfs habituels) : non publiees
+CLAUDE.md

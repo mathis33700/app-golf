@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f3d2e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Caddie</title>
+<style>
+/* VOICE: carnet de caddie, net et lisible en plein soleil
+   IDEA: la carte de score et le carnet de parcours
+   PICTURE: le trou dessine, la distance au green en tres grand
+   COLOUR: vert fairway profond, blanc, jaune drapeau en accent
+   TYPE/LAYOUT: system UI, une colonne, gros boutons pouce */
+:root{--g:#0f3d2e;--g2:#1d5c44;--fw:#5fae55;--y:#ffd23f;--bg:#f3f5f1;--card:#fff;--ink:#14211b;--mute:#5d6b63;--line:#dfe5df;--red:#c9372c;--blue:#1f6fd1}
+@media (prefers-color-scheme:dark){:root{--bg:#0b1511;--card:#13221b;--ink:#eef3ef;--mute:#9db0a5;--line:#24372e}}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;background:var(--g);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;min-height:56px}
+header h1{font-size:19px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#back{background:none;border:0;color:#fff;font-size:30px;line-height:1;width:40px;height:40px;visibility:hidden}
+#gpsdot{display:flex;align-items:center;gap:6px;font-size:12px;opacity:.9}
+#gpsdot i{width:10px;height:10px;border-radius:50%;background:#8a9a91;display:inline-block}
+main{max-width:640px;margin:0 auto;padding:12px}
+nav#tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav#tabs button{background:none;border:0;color:var(--mute);padding:10px 0 12px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav#tabs button svg{width:24px;height:24px}
+nav#tabs button.on{color:var(--g2);font-weight:700}
+@media (prefers-color-scheme:dark){nav#tabs button.on{color:var(--y)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px}
+.hero{background:var(--g);color:#fff;border:0}
+.hero p{color:#cfe3d8}
+h2{font-size:22px;margin:0 0 6px;line-height:1.15}
+h3{font-size:16px;margin:0 0 8px}
+.k{font-size:13px;text-transform:none;color:var(--mute);margin:0 0 4px}
+.hero .k{color:var(--y)}
+p{margin:0 0 10px}
+small,.mute{color:var(--mute);font-size:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 16px;border-radius:12px;border:0;background:var(--g2);color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+.btn.y{background:var(--y);color:#1b1b1b}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.red{background:transparent;color:var(--red);border:1.5px solid var(--red)}
+.btn.big{min-height:58px;font-size:18px;width:100%}
+.btn.sm{min-height:38px;font-size:14px;padding:0 12px}
+.btn.wide{width:100%}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+label.f{display:block;margin:0 0 10px;font-size:13px;color:var(--mute)}
+label.f input,label.f select{display:block;width:100%;margin-top:4px}
+input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px;min-height:44px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--fw);outline-offset:1px}
+.list a,.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.item:last-child{border-bottom:0}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;border:1.5px solid var(--line);font-size:13px;background:var(--card);color:var(--ink)}
+.chip.on{border-color:var(--g2);background:var(--g2);color:#fff}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #0003;flex:none}
+.badge{font-size:11px;background:var(--y);color:#222;border-radius:6px;padding:1px 6px;font-weight:700}
+/* play */
+.holebar{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;background:var(--g);color:#fff;border-radius:14px;padding:8px;margin-bottom:12px;text-align:center}
+.holebar .nav{background:#ffffff1f;border:0;color:#fff;font-size:28px;height:52px;border-radius:10px}
+.hn{font-size:24px;font-weight:800}
+.hm{font-size:14px;color:#cfe3d8}
+.live{display:grid;grid-template-columns:1.3fr 1fr;gap:10px;align-items:center}
+.bigd{font-size:clamp(54px,18vw,84px);font-weight:800;line-height:.95;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.bigd small{font-size:20px;letter-spacing:0;color:var(--mute);font-weight:600}
+.fb{font-size:14px;color:var(--mute);font-variant-numeric:tabular-nums}
+.fb b{color:var(--ink);font-size:18px}
+.adv{background:var(--y);color:#1b1b1b;border-radius:12px;padding:10px;text-align:center}
+.adv b{display:block;font-size:22px}
+.clubs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.clubs button{min-height:50px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:13px;font-weight:600;line-height:1.1;padding:4px}
+.clubs button small{display:block;font-weight:400;font-size:11px}
+.clubs button.rec{border-color:var(--y);box-shadow:inset 0 0 0 2px var(--y)}
+.clubs button.on{background:var(--g2);border-color:var(--g2);color:#fff}
+.clubs button.on small{color:#cfe3d8}
+.actions{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px}
+.actions .btn{min-height:60px}
+.seg{display:flex;background:var(--bg);border-radius:10px;padding:3px;gap:3px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:none;color:var(--mute);padding:8px;border-radius:8px;font-weight:600;font-size:14px}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #0002}
+.fig{position:relative;width:100%;aspect-ratio:34/44;border-radius:12px;overflow:hidden;background:#2f6b3a}
+.fig svg{position:absolute;inset:0;width:100%;height:100%}
+.photo{position:relative}
+.photo img{display:block;width:100%;border-radius:12px}
+.photo svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.prow{display:grid;grid-template-columns:1fr auto 64px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.prow:last-child{border-bottom:0}
+.pn{font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pn small{font-weight:400;width:100%}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:22px;font-weight:700}
+.stepper b{min-width:34px;text-align:center;font-size:24px;font-variant-numeric:tabular-nums}
+.pts{text-align:right;font-size:13px;color:var(--mute)}
+.pts b{display:block;font-size:20px;color:var(--ink)}
+.putt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute);grid-column:1/-1}
+.putt .stepper button{width:38px;height:38px;font-size:18px}
+.putt .stepper b{font-size:18px}
+/* tables */
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th{font-size:12px;color:var(--mute);font-weight:600}
+td.l,th.l{text-align:left}
+td input{width:52px;min-height:38px;padding:6px;text-align:center}
+.under{color:#1d8a3c;font-weight:700}.over2{color:var(--red)}
+.bar{height:8px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--fw)}
+.warn{background:#fff4d6;color:#5c4400;border-radius:10px;padding:10px;font-size:14px;margin-bottom:10px}
+@media (prefers-color-scheme:dark){.warn{background:#3a3010;color:#ffe8a6}}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#14211b;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;transition:.25s;z-index:50;max-width:90vw;text-align:center;pointer-events:none}
+#toast.on{opacity:1;transform:translateX(-50%)}
+#modal{position:fixed;inset:0;background:#000a;z-index:40;display:none;align-items:flex-end;justify-content:center}
+#modal.on{display:flex}
+#modal .sheet{background:var(--card);width:100%;max-width:640px;max-height:85vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+.spin{width:22px;height:22px;border:3px solid #fff6;border-top-color:#fff;border-radius:50%;animation:sp 1s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}#toast{transition:none}}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<header><button id="back" onclick="G.back()" aria-label="Retour">&#8249;</button><h1 id="title">Caddie</h1><span id="gpsdot"><i></i><span></span></span></header>
+<main id="app"><p class="mute">Chargement...</p></main>
+<nav id="tabs">
+  <button data-t="home" onclick="G.tab('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 21V3l10 4-10 4"/><ellipse cx="12" cy="20" rx="8" ry="2"/></svg>Partie</button>
+  <button data-t="courses" onclick="G.tab('courses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Parcours</button>
+  <button data-t="history" onclick="G.tab('history')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Parties</button>
+  <button data-t="profile" onclick="G.tab('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profil</button>
+</nav>
+<div id="toast"></div>
+<div id="modal" onclick="if(event.target===this)G.closeModal()"><div class="sheet" id="sheet"></div></div>
+<input type="file" id="fCard" accept="image/*" multiple onchange="G.cardFiles(this)">
+<input type="file" id="fHole" accept="image/*" capture="environment" onchange="G.holePhoto(this)">
+<input type="file" id="fImport" accept="application/json,.json" onchange="G.importData(this)">
+
+<script>
+{
+'use strict';
+/* ---------- utilitaires ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const rad = d => d * Math.PI / 180;
+function hav(a, b) {
+  if (!a || !b) return null;
+  const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371000 * Math.asin(Math.sqrt(h));
+}
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const std = a => { if (a.length < 2) return 0; const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1)); };
+const num = (v, d = null) => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : d; };
+const fmtDate = iso => new Date(iso).toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+const signed = n => n > 0 ? '+' + n : (n === 0 ? 'Par' : String(n));
+const pt = p => p ? {lat: +p.lat.toFixed(7), lng: +p.lng.toFixed(7)} : null;
+
+const TEE = {Noir:'#111111', Blanc:'#f4f4f4', Jaune:'#f2c200', Bleu:'#1f6fd1', Rouge:'#d0312d', Orange:'#f08a24', Vert:'#2e9b4f', Violet:'#7a3fbf'};
+const TEE_EN = {black:'Noir', white:'Blanc', yellow:'Jaune', blue:'Bleu', red:'Rouge', orange:'Orange', green:'Vert', purple:'Violet', violet:'Violet'};
+const teeHex = c => TEE[c] || '#999';
+const DEFAULT_CLUBS = [['Driver',220],['Bois 3',200],['Hybride',185],['Fer 5',170],['Fer 6',160],['Fer 7',150],['Fer 8',140],['Fer 9',128],['PW',115],['GW',100],['SW',85],['LW',65],['Putter',0]];
+const JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+
+/* ---------- stockage local (IndexedDB) ---------- */
+const Store = {
+  db: null, mem: {},
+  async open() {
+    try {
+      this.db = await new Promise((res, rej) => {
+        const r = indexedDB.open('caddie', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      });
+    } catch (e) { this.db = null; }
+    try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+  },
+  get(k) {
+    if (!this.db) return Promise.resolve(this.mem[k]);
+    return new Promise(res => { try { const r = this.db.transaction('kv').objectStore('kv').get(k); r.onsuccess = () => res(r.result); r.onerror = () => res(undefined); } catch (e) { res(undefined); } });
+  },
+  set(k, v) {
+    if (!this.db) { this.mem[k] = v; return Promise.resolve(); }
+    return new Promise(res => { try { const t = this.db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = () => res(); t.onerror = () => res(); } catch (e) { res(); } });
+  },
+  del(k) {
+    if (!this.db) { delete this.mem[k]; return Promise.resolve(); }
+    return new Promise(res => { try { const t = this.db.transaction('kv', 'readwrite'); t.objectStore('kv').delete(k); t.oncomplete = () => res(); t.onerror = () => res(); } catch (e) { res(); } });
+  }
+};
+
+/* ---------- etat ---------- */
+const S = {profile: null, guests: [], courses: [], rounds: [], view: 'home', params: {}, stack: [], setup: null, calib: null, sim: false, photoCache: {}};
+const save = {
+  profile: () => Store.set('profile', S.profile), guests: () => Store.set('guests', S.guests),
+  courses: () => Store.set('courses', S.courses), rounds: () => Store.set('rounds', S.rounds)
+};
+const defaultProfile = () => ({name: 'Moi', index: 36, sex: 'H', tee: 'Jaune', clubs: DEFAULT_CLUBS.map(([n, d]) => ({id: uid(), name: n, dist: d})), apiKey: '', model: 'claude-sonnet-5-5'});
+const course = id => S.courses.find(c => c.id === id);
+const liveRound = () => S.rounds.find(r => r.status === 'live');
+const clubById = id => S.profile.clubs.find(c => c.id === id);
+
+/* ---------- GPS ---------- */
+const GPS = {
+  pos: null, watch: null, err: null,
+  start() {
+    if (this.watch != null || !navigator.geolocation) { if (!navigator.geolocation) this.err = 'GPS indisponible'; return; }
+    this.watch = navigator.geolocation.watchPosition(p => {
+      if (S.sim) return;
+      this.err = null;
+      this.pos = {lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, t: Date.now()};
+      onGps();
+    }, e => { this.err = e.code === 1 ? 'Autorise la localisation' : 'Signal GPS faible'; onGps(); }, {enableHighAccuracy: true, maximumAge: 2000, timeout: 20000});
+  }
+};
+function fix() {
+  return new Promise((res, rej) => {
+    if (GPS.pos && (S.sim || Date.now() - GPS.pos.t < 4000)) return res({...GPS.pos});
+    if (!navigator.geolocation) return rej(new Error('GPS indisponible'));
+    navigator.geolocation.getCurrentPosition(
+      p => { GPS.pos = {lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, t: Date.now()}; res({...GPS.pos}); },
+      () => (GPS.pos && Date.now() - GPS.pos.t < 60000) ? res({...GPS.pos}) : rej(new Error('Position GPS introuvable')), {enableHighAccuracy: true, timeout: 15000, maximumAge: 3000});
+  });
+}
+function gpsBadge() {
+  const i = $('#gpsdot i'), t = $('#gpsdot span');
+  if (S.sim) { i.style.background = '#b07cff'; t.textContent = 'Simu'; return; }
+  if (!GPS.pos) { i.style.background = GPS.err ? '#e05a4f' : '#8a9a91'; t.textContent = GPS.err ? 'GPS' : ''; return; }
+  const a = GPS.pos.acc;
+  i.style.background = a < 10 ? '#4fd17a' : a < 25 ? '#ffd23f' : '#e05a4f';
+  t.textContent = '±' + Math.round(a) + ' m';
+}
+function onGps() {
+  gpsBadge();
+  if (S.view === 'play') { renderLive(); renderClubs(); if (!S.calib) renderHoleView(); }
+}
+
+/* ---------- calculs golf ---------- */
+function holeRanks(c) {
+  const idx = c.holes.map((h, i) => ({i, h: h.hcp || (i + 1)}));
+  idx.sort((a, b) => a.h - b.h || a.i - b.i);
+  const rank = Array(c.holes.length); idx.forEach((o, k) => rank[o.i] = k + 1); return rank;
+}
+function strokesOn(ph, rank, n) {
+  if (ph >= 0) return Math.floor(ph / n) + (rank <= ph % n ? 1 : 0);
+  const a = -ph; return -(Math.floor(a / n) + (rank > n - (a % n) ? 1 : 0));
+}
+const coursePar = c => c.holes.reduce((s, h) => s + (h.par || 0), 0);
+const teeOf = (c, color) => c.tees.find(t => t.color === color) || c.tees[0];
+function playingHcp(index, c, color) {
+  const t = teeOf(c, color) || {};
+  const par = t.par || coursePar(c), sss = t.sss || par, slope = t.slope || 113;
+  let idx = num(index, 54); if (c.holes.length === 9) idx = idx / 2;
+  return Math.round(idx * slope / 113 + (sss - par));
+}
+const teeLength = (c, color) => c.holes.reduce((s, h) => s + (num(h.dist && h.dist[color], 0)), 0);
+function suggestTee(c, driver, sex) {
+  if (!c.tees.length) return null;
+  const withLen = c.tees.map(t => ({t, L: teeLength(c, t.color)})).filter(o => o.L > 0);
+  if (driver && withLen.length) {
+    const target = driver * (c.holes.length === 9 ? 14 : 28); // regle "tee it forward"
+    return withLen.sort((a, b) => Math.abs(a.L - target) - Math.abs(b.L - target))[0].t.color;
+  }
+  const pref = sex === 'F' ? 'Rouge' : 'Jaune';
+  return (c.tees.find(t => t.color === pref) || c.tees[0]).color;
+}
+function totals(c, p) {
+  const ranks = holeRanks(c), n = c.holes.length;
+  const o = {brut: 0, par: 0, net: 0, sn: 0, sb: 0, played: 0, putts: 0, out: 0, inn: 0};
+  c.holes.forEach((h, i) => {
+    const s = p.scores[i], rec = strokesOn(p.ph, ranks[i], n);
+    if (s != null) {
+      o.brut += s; o.par += h.par; o.net += s - rec; o.played++;
+      o.sb += Math.max(0, h.par + 2 - s); o.sn += Math.max(0, h.par + rec + 2 - s);
+      if (i < 9) o.out += s; else o.inn += s;
+    }
+    if (p.putts && p.putts[i] != null) o.putts += p.putts[i];
+  });
+  o.toPar = o.brut - o.par; o.netToPar = o.net - o.par; return o;
+}
+function holePoints(c, p, i, ranks) {
+  const s = p.scores[i]; if (s == null) return null;
+  const rec = strokesOn(p.ph, ranks[i], c.holes.length);
+  return Math.max(0, c.holes[i].par + rec + 2 - s);
+}
+function matchPlay(c, a, b) {
+  const ranks = holeRanks(c), n = c.holes.length, diff = b.ph - a.ph;
+  let st = 0, played = 0;
+  c.holes.forEach((h, i) => {
+    const sa = a.scores[i], sb = b.scores[i]; if (sa == null || sb == null) return;
+    played++;
+    const give = Math.abs(diff), extra = Math.floor(give / n) + (ranks[i] <= give % n ? 1 : 0);
+    const na = sa - (diff < 0 ? extra : 0), nb = sb - (diff > 0 ? extra : 0);
+    if (na < nb) st++; else if (nb < na) st--;
+  });
+  if (!played) return null;
+  const left = c.holes.length - played;
+  if (st === 0) return 'All square' + (left ? ' (' + played + ' trou' + (played > 1 ? 's' : '') + ')' : '');
+  const lead = st > 0 ? a.name : b.name, up = Math.abs(st);
+  if (left && up > left) return lead + ' gagne ' + up + '&' + left;
+  return lead + ' ' + up + ' UP' + (left ? ' (' + played + ' trou' + (played > 1 ? 's' : '') + ')' : '');
+}
+function recommend(rem) {
+  const cl = S.profile.clubs.filter(c => c.dist > 0).sort((a, b) => b.dist - a.dist);
+  if (rem == null || !cl.length) return null;
+  if (rem < 25) return S.profile.clubs.find(c => c.dist === 0) || cl[cl.length - 1];
+  if (rem >= cl[0].dist) return cl[0];
+  return cl.reduce((best, c) => Math.abs(c.dist - rem) < Math.abs(best.dist - rem) ? c : best, cl[0]);
+}
+function clubStats(rounds) {
+  const map = {};
+  for (const r of rounds) for (const st of (r.holes || [])) for (const s of (st.shots || [])) {
+    const club = clubById(s.club);
+    const key = club ? club.id : 'n:' + s.cn;
+    const ref = club ? club.dist : 0;
+    if (!s.dist || (club && club.dist === 0)) continue;
+    const m = map[key] || (map[key] = {id: key, name: club ? club.name : s.cn, ref, full: [], partial: 0});
+    const full = s.remBefore == null || !ref || s.remBefore >= ref * 0.9;
+    if (full) m.full.push(s.dist); else m.partial++;
+  }
+  return Object.values(map).sort((a, b) => b.ref - a.ref).map(m => ({...m, avg: mean(m.full), med: median(m.full), sd: std(m.full), max: m.full.length ? Math.max(...m.full) : null}));
+}
+function advice(stats, rounds) {
+  const out = [];
+  for (const s of stats) {
+    if (s.full.length < 2 || !s.ref) continue;
+    const gap = (s.med - s.ref) / s.ref;
+    if (gap < -0.08) out.push(['work', s.name + ' : ' + Math.round(s.ref - s.med) + ' m plus court que ton etalonnage. A travailler (contact, vitesse), ou etalonnage trop optimiste.']);
+    else if (gap > 0.08) out.push(['info', s.name + ' : ' + Math.round(s.med - s.ref) + ' m plus long que prevu. Pense a mettre a jour l\'etalonnage.']);
+    if (s.avg && s.sd / s.avg > 0.12 && s.full.length >= 3) out.push(['work', s.name + ' : distances irregulieres (±' + Math.round(s.sd) + ' m). Travailler la regularite.']);
+  }
+  let putts = [], holes = 0;
+  for (const r of rounds) { const p = r.players[0]; (p.putts || []).forEach(v => { if (v != null) { putts.push(v); holes++; } }); }
+  if (holes >= 6) { const a = mean(putts); if (a > 2) out.push(['work', 'Putting : ' + a.toFixed(1) + ' putts par trou en moyenne. Le petit jeu est la priorite.']); }
+  return out.map(([k, t]) => [k, t.replace(/etalonnage/g, 'étalonnage').replace(/A travailler/g, 'À travailler').replace(/prevu/g, 'prévu').replace(/irregulieres/g, 'irrégulières').replace(/regularite/g, 'régularité').replace(/priorite/g, 'priorité')]);
+}
+
+/* ---------- navigation ---------- */
+const V = {}, AFTER = {};
+const TITLES = {home: 'Caddie', setup: 'Nouvelle partie', play: 'Partie', courses: 'Parcours', course: 'Fiche parcours', history: 'Mes parties', round: 'Carte de score', profile: 'Profil'};
+function render() {
+  const v = S.view;
+  $('#app').innerHTML = V[v](S.params);
+  $('#title').textContent = v === 'play' && liveRound() ? (course(liveRound().courseId) || {}).name || 'Partie' : TITLES[v];
+  $('#back').style.visibility = S.stack.length ? 'visible' : 'hidden';
+  const tab = {setup: 'home', play: 'home', course: 'courses', round: 'history'}[v] || v;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  AFTER[v] && AFTER[v](S.params);
+  gpsBadge();
+}
+function go(view, params = {}, push = true) {
+  if (push) S.stack.push([S.view, S.params]);
+  S.view = view; S.params = params; S.calib = null; render(); window.scrollTo(0, 0);
+}
+let toastT;
+function toast(m, ms = 2600) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), ms); }
+function modal(html) { $('#sheet').innerHTML = html; $('#modal').classList.add('on'); }
+const G = window.G = {};
+G.closeModal = () => $('#modal').classList.remove('on');
+G.back = () => { const p = S.stack.pop(); if (p) { S.view = p[0]; S.params = p[1]; S.calib = null; render(); } };
+G.tab = v => { S.stack = []; go(v, {}, false); };
+G.go = (v, id) => go(v, id ? {id} : {});
+
+/* ---------- accueil ---------- */
+V.home = () => {
+  const live = liveRound();
+  let h = '';
+  if (live) {
+    const c = course(live.courseId);
+    h += `<section class="card hero"><p class="k">Partie en cours</p><h2>${esc(c ? c.name : 'Parcours')}</h2>
+      <p>Trou ${live.hole + 1} · ${live.players.map(p => esc(p.name)).join(', ')}</p>
+      <button class="btn y big" onclick="G.go('play')">Reprendre la partie</button></section>`;
+  } else {
+    h += `<section class="card hero"><p class="k">Prêt à jouer</p><h2>Nouvelle partie</h2>
+      <p>Le parcours est proposé automatiquement si tu es déjà venu.</p>
+      <button class="btn y big" onclick="G.newRound()">Commencer</button></section>`;
+  }
+  if (!S.courses.length) h += `<section class="card"><h3>Première fois ?</h3><p class="mute">Ajoute un parcours : cherche les golfs autour de toi sur OpenStreetMap, puis photographie la carte de score pour remplir les distances.</p><button class="btn wide" onclick="G.tab('courses')">Ajouter un parcours</button></section>`;
+  const done = S.rounds.filter(r => r.status === 'done').slice(-3).reverse();
+  if (done.length) h += `<section class="card"><h3>Dernières parties</h3><div class="list">${done.map(roundLine).join('')}</div></section>`;
+  h += `<section class="card"><h3>Mon index : ${esc(S.profile.index)}</h3><p class="mute">${S.profile.clubs.filter(c => c.dist > 0).length} clubs étalonnés. <a href="#" onclick="G.tab('profile');return false">Modifier</a></p></section>`;
+  return h;
+};
+function roundLine(r) {
+  const c = course(r.courseId); if (!c) return '';
+  const t = totals(c, r.players[0]);
+  return `<a href="#" onclick="G.go('round','${r.id}');return false"><span><b>${esc(c.name)}</b><br><small>${fmtDate(r.date)} · ${r.players.length} joueur${r.players.length > 1 ? 's' : ''}</small></span><span style="text-align:right"><b>${t.brut || '-'}</b> <small>(${signed(t.toPar)})</small><br><small>${t.sn} pts stableford</small></span></a>`;
+}
+
+/* ---------- preparation de la partie ---------- */
+G.newRound = () => {
+  GPS.start();
+  const me = S.profile;
+  S.setup = {courseId: null, players: [{id: 'me', name: me.name, index: me.index, sex: me.sex, driver: (S.profile.clubs.find(c => /driver/i.test(c.name)) || {}).dist, tee: null, me: true}]};
+  go('setup');
+  const pick = () => {
+    if (S.setup.courseId) return;
+    const near = nearestCourse();
+    if (near && near.d < 3000) { G.pickCourse(near.c.id); toast('Parcours reconnu : ' + near.c.name); }
+    else if (S.courses.length === 1) G.pickCourse(S.courses[0].id);
+  };
+  pick(); fix().then(() => { if (S.view === 'setup') { pick(); render(); } }).catch(() => {});
+};
+function nearestCourse() {
+  if (!GPS.pos) return null;
+  return S.courses.filter(c => c.lat).map(c => ({c, d: hav(GPS.pos, c)})).sort((a, b) => a.d - b.d)[0] || null;
+}
+V.setup = () => {
+  const su = S.setup; if (!su) return '<p>...</p>';
+  const list = S.courses.map(c => ({c, d: GPS.pos && c.lat ? hav(GPS.pos, c) : null})).sort((a, b) => (a.d ?? 1e12) - (b.d ?? 1e12));
+  let h = `<section class="card"><h3>Parcours</h3>`;
+  if (!list.length) h += `<p class="mute">Aucun parcours enregistré.</p><button class="btn wide" onclick="G.tab('courses')">Ajouter un parcours</button>`;
+  h += list.map(({c, d}) => `<div class="item" onclick="G.pickCourse('${c.id}')" style="cursor:pointer"><span><b>${esc(c.name)}</b> ${d != null && d < 3000 ? '<span class="badge">Tu es ici</span>' : ''}<br><small>${c.holes.length} trous · par ${coursePar(c)}${d != null ? ' · ' + (d < 1000 ? Math.round(d) + ' m' : (d / 1000).toFixed(0) + ' km') : ''}</small></span><span class="chip ${su.courseId === c.id ? 'on' : ''}">${su.courseId === c.id ? 'Choisi' : 'Choisir'}</span></div>`).join('');
+  h += `</section>`;
+  const c = course(su.courseId);
+  if (c) {
+    if (!c.tees.length) h += `<div class="warn">Ce parcours n'a pas encore de départs. Ajoute-les dans la fiche parcours (ou par photo de la carte).</div>`;
+    h += `<section class="card"><h3>Joueurs et départs</h3>`;
+    h += su.players.map((p, i) => {
+      const sug = suggestTee(c, p.driver, p.sex);
+      if (!p.tee || !c.tees.find(t => t.color === p.tee)) p.tee = (p.me && c.tees.find(t => t.color === S.profile.tee)) ? S.profile.tee : sug;
+      const ph = c.tees.length ? playingHcp(p.index, c, p.tee) : null;
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="row between"><b>${esc(p.name)}</b><span class="mute">Index ${esc(p.index)}${ph != null ? ' · HCP de jeu <b style="color:var(--ink)">' + ph + '</b>' : ''}</span></div>
+        <div class="row" style="margin-top:8px">${c.tees.map(t => `<button class="chip ${p.tee === t.color ? 'on' : ''}" onclick="G.setTee(${i},'${t.color}')"><span class="dot" style="background:${teeHex(t.color)}"></span>${t.color}${t.color === sug ? ' <span class="badge">conseillé</span>' : ''}</button>`).join('')}</div>
+        ${p.me ? '' : `<button class="btn sm ghost" style="margin-top:8px" onclick="G.rmPlayer(${i})">Retirer</button>`}</div>`;
+    }).join('');
+    const avail = S.guests.filter(g => !su.players.find(p => p.gid === g.id));
+    h += `<div style="margin-top:10px"><p class="k">Ajouter un invité</p><div class="row">${avail.map(g => `<button class="chip" onclick="G.addGuest('${g.id}')">+ ${esc(g.name)}</button>`).join('')}<button class="chip" onclick="G.newGuest()">+ Nouvel invité</button></div></div></section>`;
+    h += `<p class="mute" style="font-size:13px">Départ conseillé : longueur du parcours proche de 28 fois la distance au driver. Scores calculés en brut, net, stableford brut et net, et match play à deux.</p>`;
+    h += `<button class="btn y big" ${c.tees.length ? '' : 'disabled'} onclick="G.start()">Démarrer au trou 1</button>`;
+  }
+  return h;
+};
+G.pickCourse = id => { S.setup.courseId = id; if (S.view === 'setup') render(); };
+G.setTee = (i, col) => { S.setup.players[i].tee = col; render(); };
+G.rmPlayer = i => { S.setup.players.splice(i, 1); render(); };
+G.addGuest = gid => { const g = S.guests.find(x => x.id === gid); S.setup.players.push({id: uid(), gid: g.id, name: g.name, index: g.index, sex: g.sex, driver: g.driver, tee: null}); render(); };
+G.newGuest = () => modal(`<h3>Nouvel invité</h3>
+  <label class="f">Prénom<input id="gN" autocomplete="off"></label>
+  <div class="grid2"><label class="f">Index<input id="gI" inputmode="decimal" value="36"></label>
+  <label class="f">Sexe<select id="gS"><option value="H">H</option><option value="F">F</option></select></label></div>
+  <label class="f">Distance driver (m), facultatif<input id="gD" inputmode="numeric" placeholder="ex. 200"></label>
+  <button class="btn wide" onclick="G.saveGuest()">Ajouter</button>`);
+G.saveGuest = () => {
+  const name = $('#gN').value.trim(); if (!name) return toast('Indique un prénom');
+  const g = {id: uid(), name, index: num($('#gI').value, 54), sex: $('#gS').value, driver: num($('#gD').value)};
+  S.guests.push(g); save.guests(); G.closeModal();
+  if (S.view === 'setup') G.addGuest(g.id); else render();
+};
+G.start = async () => {
+  const su = S.setup, c = course(su.courseId); if (!c) return;
+  const n = c.holes.length;
+  const r = {id: uid(), courseId: c.id, date: new Date().toISOString(), status: 'live', hole: 0, club: null, mode: 'map',
+    players: su.players.map(p => ({id: p.id, name: p.name, index: num(p.index, 54), tee: p.tee, ph: playingHcp(p.index, c, p.tee), me: !!p.me, scores: Array(n).fill(null), putts: Array(n).fill(null)})),
+    holes: Array.from({length: n}, () => ({start: null, shots: []}))};
+  S.rounds.push(r); await save.rounds(); S.stack = []; go('play', {}, false); wake();
+};
+
+/* ---------- partie ---------- */
+let wakeLock = null;
+async function wake() { try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.view === 'play') wake(); });
+
+function ctx() {
+  const r = liveRound(); if (!r) return null;
+  const c = course(r.courseId), i = r.hole, h = c.holes[i], st = r.holes[i], me = r.players[0];
+  const last = st.shots.length ? st.shots[st.shots.length - 1].to : st.start;
+  return {r, c, i, h, st, me, last, cur: GPS.pos, tee: h.tee || st.start, green: h.green, len: num(h.dist && h.dist[me.tee])};
+}
+function greenPoly(x) {
+  if (!x.green || !x.c.osm) return null;
+  let best = null, bd = 45;
+  for (const f of x.c.osm.features) if (f.t === 'green') {
+    const cen = {lat: mean(f.p.map(p => p[0])), lng: mean(f.p.map(p => p[1]))}, d = hav(cen, x.green);
+    if (d < bd) { bd = d; best = f; }
+  }
+  return best ? best.p.map(p => ({lat: p[0], lng: p[1]})) : null;
+}
+function remaining(x, from) {
+  from = from || x.cur;
+  if (x.green && from) {
+    const d = hav(from, x.green), poly = greenPoly(x);
+    let front = null, back = null;
+    if (poly) { const ds = poly.map(p => hav(from, p)); front = Math.min(...ds); back = Math.max(...ds); }
+    return {d, front, back, est: false};
+  }
+  if (x.len) {
+    if (from && x.tee) return {d: Math.max(0, x.len - hav(x.tee, from)), est: true};
+    if (!x.st.shots.length) return {d: x.len, est: true};
+  }
+  return null;
+}
+V.play = () => {
+  const x = ctx(); if (!x) return `<p>Aucune partie en cours.</p><button class="btn" onclick="G.tab('home')">Accueil</button>`;
+  const {r, c, h, me} = x;
+  return `<section class="holebar"><button class="nav" onclick="G.hole(-1)" ${x.i === 0 ? 'disabled' : ''}>&#8249;</button>
+    <div><div class="hn">Trou ${x.i + 1}</div><div class="hm">Par ${h.par || '-'} · HCP ${h.hcp || '-'}${x.len ? ' · ' + x.len + ' m' : ''} <span class="dot" style="background:${teeHex(me.tee)};vertical-align:-1px"></span></div></div>
+    <button class="nav" onclick="G.hole(1)" ${x.i === c.holes.length - 1 ? 'disabled' : ''}>&#8250;</button></section>
+  <section class="card" id="live"></section>
+  <section class="actions" id="actions"></section>
+  <section class="card"><div class="row between" style="margin-bottom:8px"><h3 style="margin:0">Club du prochain coup</h3><small id="clubhint"></small></div><div class="clubs" id="clubs"></div></section>
+  <section class="card" id="hview"></section>
+  <section class="card" id="scores"></section>
+  <div class="grid2" style="margin-bottom:12px"><button class="btn ghost" onclick="G.go('round','${r.id}')">Carte de score</button><button class="btn" onclick="G.finish()">Terminer</button></div>`;
+};
+AFTER.play = () => { if (!ctx()) return; GPS.start(); wake(); renderLive(); renderActions(); renderClubs(); renderHoleView(); renderScores(); };
+
+function renderLive() {
+  const el = $('#live'), x = ctx(); if (!el || !x) return;
+  const rem = remaining(x);
+  let h = '<div class="live"><div>';
+  if (rem) {
+    h += `<div class="bigd">${Math.round(rem.d)}<small> m</small></div><div class="fb">${rem.est ? 'estimé (green non positionné)' : 'au centre du green'}</div>`;
+    if (rem.front != null) h += `<div class="fb">Avant <b>${Math.round(rem.front)}</b> · Fond <b>${Math.round(rem.back)}</b></div>`;
+  } else h += `<div class="fb">${x.cur ? 'Distance inconnue : renseigne la longueur du trou ou place le green.' : (GPS.err || 'Recherche du signal GPS...')}</div>`;
+  if (x.last && x.cur) h += `<div class="fb" style="margin-top:6px">Depuis ta dernière position : <b>${Math.round(hav(x.last, x.cur))}</b> m</div>`;
+  h += '</div>';
+  const rc = recommend(rem ? rem.d : null);
+  h += rc ? `<div class="adv"><small>Conseil</small><b>${esc(rc.name)}</b><small>${rc.dist ? rc.dist + ' m' : 'sur le green'}</small></div>` : '<div></div>';
+  el.innerHTML = h + '</div>';
+}
+function renderActions() {
+  const el = $('#actions'), x = ctx(); if (!el || !x) return;
+  const n = x.st.shots.length;
+  const main = (!x.st.start && !n)
+    ? `<button class="btn y" onclick="G.atTee()">Je suis au départ</button>`
+    : `<button class="btn y" onclick="G.ball()">Ma balle est ici<br><small style="font-weight:400;color:#333">coup ${n + 1}</small></button>`;
+  el.innerHTML = main + `<button class="btn ghost" onclick="G.markGreen()">${x.green ? 'Corriger green' : 'Green ici'}</button>`
+    + (n ? `<button class="btn ghost sm" style="grid-column:1/-1" onclick="G.undo()">Annuler le dernier coup (${esc(x.st.shots[n - 1].cn)} · ${x.st.shots[n - 1].dist} m)</button>` : '');
+}
+function renderClubs() {
+  const el = $('#clubs'), x = ctx(); if (!el || !x) return;
+  const rem = remaining(x), rc = recommend(rem ? rem.d : null);
+  el.innerHTML = S.profile.clubs.map(c => `<button class="${x.r.club === c.id ? 'on' : ''} ${rc && rc.id === c.id ? 'rec' : ''}" onclick="G.club('${c.id}')">${esc(c.name)}<small>${c.dist ? c.dist + ' m' : ' '}</small></button>`).join('');
+  const sel = clubById(x.r.club);
+  $('#clubhint').textContent = sel ? 'Choisi : ' + sel.name : (rc ? 'Auto : ' + rc.name : '');
+}
+G.club = id => { const r = liveRound(); r.club = r.club === id ? null : id; save.rounds(); renderClubs(); };
+G.hole = d => { const r = liveRound(), c = course(r.courseId); r.hole = Math.max(0, Math.min(c.holes.length - 1, r.hole + d)); r.club = null; save.rounds(); render(); window.scrollTo(0, 0); };
+G.atTee = async () => {
+  try {
+    const p = await fix(), x = ctx();
+    x.st.start = pt(p);
+    if (!x.h.tee) { x.h.tee = pt(p); }
+    if (x.i === 0 && !x.c.lat) { x.c.lat = p.lat; x.c.lng = p.lng; }
+    await save.rounds(); await save.courses();
+    toast(p.acc > 25 ? 'Départ enregistré (GPS peu précis : ±' + Math.round(p.acc) + ' m)' : 'Départ enregistré');
+    renderLive(); renderActions(); renderHoleView();
+  } catch (e) { toast(e.message); }
+};
+G.ball = async () => {
+  try {
+    const p = await fix(), x = ctx();
+    const from = x.last || x.h.tee;
+    if (!from) { x.st.start = pt(p); await save.rounds(); toast('Position de départ enregistrée'); return renderActions(); }
+    const rem = remaining(x, from);
+    const club = clubById(x.r.club) || recommend(rem ? rem.d : null) || S.profile.clubs[0];
+    const shot = {club: club.id, cn: club.name, from: pt(from), to: pt(p), dist: Math.round(hav(from, p)), remBefore: rem ? Math.round(rem.d) : null, acc: Math.round(p.acc || 0)};
+    x.st.shots.push(shot); x.r.club = null;
+    await save.rounds();
+    toast(club.name + ' : ' + shot.dist + ' m' + (p.acc > 25 ? ' (GPS ±' + Math.round(p.acc) + ' m)' : ''));
+    renderLive(); renderActions(); renderClubs(); renderHoleView(); renderScores();
+  } catch (e) { toast(e.message); }
+};
+G.undo = async () => { const x = ctx(); x.st.shots.pop(); await save.rounds(); renderLive(); renderActions(); renderHoleView(); renderScores(); };
+G.markGreen = async () => {
+  try {
+    const p = await fix(), x = ctx();
+    if (x.green && !confirm('Remplacer la position du green de ce trou par ta position actuelle ?')) return;
+    x.h.green = pt(p); await save.courses();
+    toast('Green enregistré pour les prochaines parties'); renderLive(); renderClubs(); renderActions(); renderHoleView();
+  } catch (e) { toast(e.message); }
+};
+G.finish = async () => {
+  if (!confirm('Terminer la partie et l\'enregistrer ?')) return;
+  const r = liveRound(); r.status = 'done'; r.end = new Date().toISOString(); await save.rounds();
+  try { wakeLock && wakeLock.release(); } catch (e) {}
+  S.stack = []; go('round', {id: r.id}, false);
+};
+
+/* ---------- vue du trou : schema et photo ---------- */
+let proj = null; // derniere projection du schema (pour le mode simulation)
+G.mode = m => { const r = liveRound(); r.mode = m; S.calib = null; save.rounds(); renderHoleView(); };
+function renderHoleView() {
+  const el = $('#hview'), x = ctx(); if (!el || !x) return;
+  const m = x.r.mode || 'map';
+  let h = `<div class="seg"><button class="${m === 'map' ? 'on' : ''}" onclick="G.mode('map')">Schéma</button><button class="${m === 'photo' ? 'on' : ''}" onclick="G.mode('photo')">Photo du trou</button></div>`;
+  if (m === 'map') {
+    h += `<div class="fig" id="fig">${holeSVG(x)}</div>`;
+    if (S.sim) h += `<p class="mute" style="margin:8px 0 0">Mode simulation : touche le schéma pour te déplacer.</p>`;
+    el.innerHTML = h;
+    if (S.sim) $('#fig').onclick = simTap;
+  } else { el.innerHTML = h + '<div id="phbox"></div>'; renderPhoto(x); }
+}
+function localXY(o) { const k = Math.cos(rad(o.lat)) * 111320; return p => [(p.lng - o.lng) * k, (p.lat - o.lat) * 110540]; }
+function holeSVG(x) {
+  const W = 340, H = 440;
+  const A = x.tee, B = x.green;
+  const pts = [A, B, ...x.st.shots.map(s => s.to), x.st.start].filter(Boolean);
+  if (x.cur && (!pts.length || pts.some(p => hav(p, x.cur) < 700))) pts.push(x.cur);
+  if (!pts.length) return `<svg viewBox="0 0 ${W} ${H}"><text x="170" y="200" fill="#fff" font-size="15" text-anchor="middle">Pas encore de données pour ce trou.</text><text x="170" y="224" fill="#d6ead9" font-size="13" text-anchor="middle">Importe le parcours depuis OpenStreetMap</text><text x="170" y="244" fill="#d6ead9" font-size="13" text-anchor="middle">ou appuie sur « Je suis au départ ».</text></svg>`;
+  const O = pts[0], L = localXY(O);
+  let th = 0;
+  if (A && B) { const [gx, gy] = L(B), [ax, ay] = L(A); th = Math.atan2(gx - ax, gy - ay); }
+  const ct = Math.cos(th), sn = Math.sin(th);
+  const R = p => { const [a, b] = L(p); return [a * ct - b * sn, a * sn + b * ct]; };
+  const P = pts.map(R);
+  let x0 = Math.min(...P.map(p => p[0])), x1 = Math.max(...P.map(p => p[0])), y0 = Math.min(...P.map(p => p[1])), y1 = Math.max(...P.map(p => p[1]));
+  const pad = 30; x0 -= pad; x1 += pad; y0 -= pad; y1 += pad + 10;
+  if (x1 - x0 < 120) { const m = (x0 + x1) / 2; x0 = m - 60; x1 = m + 60; }
+  if (y1 - y0 < 150) { const m = (y0 + y1) / 2; y0 = m - 75; y1 = m + 75; }
+  const s = Math.min(W / (x1 - x0), H / (y1 - y0));
+  const ox = (W - (x1 - x0) * s) / 2, oy = (H - (y1 - y0) * s) / 2;
+  const T = p => { const [a, b] = R(p); return [ox + (a - x0) * s, H - (oy + (b - y0) * s)]; };
+  proj = {O, ct, sn, s, x0, y0, ox, oy, H};
+  const f2 = v => v.toFixed(1);
+  let g = `<rect width="${W}" height="${H}" fill="#2f6b3a"/>`;
+  if (x.c.osm) {
+    const mid = A && B ? {lat: (A.lat + B.lat) / 2, lng: (A.lng + B.lng) / 2} : O;
+    const radius = (A && B ? hav(A, B) / 2 : 250) + 90;
+    const col = {fairway: '#5fae55', water: '#4a9fd8', bunker: '#ecdcaa', tee: '#86c97a', green: '#8fe07a', rough: '#3d7d45'};
+    const order = ['rough', 'fairway', 'water', 'tee', 'bunker', 'green'];
+    const feats = x.c.osm.features.filter(f => f.p.some(q => hav({lat: q[0], lng: q[1]}, mid) < radius));
+    feats.sort((a, b) => order.indexOf(a.t) - order.indexOf(b.t));
+    for (const f of feats) g += `<polygon points="${f.p.map(q => T({lat: q[0], lng: q[1]}).map(f2).join(',')).join(' ')}" fill="${col[f.t] || '#5fae55'}" stroke="#0002" stroke-width="1"/>`;
+  }
+  if (A && B) { const [a1, a2] = T(A), [b1, b2] = T(B); g += `<line x1="${f2(a1)}" y1="${f2(a2)}" x2="${f2(b1)}" y2="${f2(b2)}" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-dasharray="6 6"/>`; }
+  if (A) { const [a, b] = T(A); g += `<rect x="${f2(a - 7)}" y="${f2(b - 5)}" width="14" height="10" rx="2" fill="${teeHex(x.me.tee)}" stroke="#000" stroke-opacity=".5"/>`; }
+  if (B) { const [a, b] = T(B); g += `<line x1="${f2(a)}" y1="${f2(b)}" x2="${f2(a)}" y2="${f2(b - 30)}" stroke="#fff" stroke-width="2.5"/><path d="M${f2(a)} ${f2(b - 30)}l18 6-18 7z" fill="#ffd23f"/><circle cx="${f2(a)}" cy="${f2(b)}" r="3.5" fill="#111"/>`; }
+  let prev = x.st.start || A;
+  x.st.shots.forEach((sh, k) => {
+    const [a1, a2] = T(sh.from || prev), [b1, b2] = T(sh.to);
+    g += `<line x1="${f2(a1)}" y1="${f2(a2)}" x2="${f2(b1)}" y2="${f2(b2)}" stroke="#ffd23f" stroke-width="3"/><circle cx="${f2(b1)}" cy="${f2(b2)}" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>`;
+    const lx = (a1 + b1) / 2, ly = (a2 + b2) / 2, tx = lx > W - 110 ? lx - 8 : lx + 8;
+    g += `<text x="${f2(tx)}" y="${f2(ly)}" fill="#fff" stroke="#123" stroke-width="3" paint-order="stroke" font-size="13" font-weight="700" text-anchor="${lx > W - 110 ? 'end' : 'start'}">${k + 1}. ${esc(sh.cn)} ${sh.dist} m</text>`;
+    prev = sh.to;
+  });
+  if (x.cur) {
+    const [a, b] = T(x.cur);
+    if (B) { const [c1, c2] = T(B), d = Math.round(hav(x.cur, B)); g += `<line x1="${f2(a)}" y1="${f2(b)}" x2="${f2(c1)}" y2="${f2(c2)}" stroke="#9fd0ff" stroke-width="1.5" stroke-dasharray="3 5"/><text x="${f2((a + c1) / 2 - 8)}" y="${f2((b + c2) / 2)}" fill="#fff" stroke="#123" stroke-width="3" paint-order="stroke" font-size="15" font-weight="800" text-anchor="end">${d} m</text>`; }
+    const acc = Math.min(60, (x.cur.acc || 0) * s);
+    g += `<circle cx="${f2(a)}" cy="${f2(b)}" r="${f2(Math.max(acc, 9))}" fill="#1f6fd1" fill-opacity=".18"/><circle cx="${f2(a)}" cy="${f2(b)}" r="8" fill="#1f6fd1" stroke="#fff" stroke-width="3"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${g}</svg>`;
+}
+function simTap(e) {
+  if (!proj) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  const W = 340, H = 440, sc = Math.min(r.width / W, r.height / H);
+  const vx = (e.clientX - r.left - (r.width - W * sc) / 2) / sc, vy = (e.clientY - r.top - (r.height - H * sc) / 2) / sc;
+  const {O, ct, sn, s, x0, y0, ox, oy} = proj;
+  const a = (vx - ox) / s + x0, b = (H - vy - oy) / s + y0;
+  const lx = a * ct + b * sn, ly = -a * sn + b * ct; // rotation inverse
+  const k = Math.cos(rad(O.lat)) * 111320;
+  GPS.pos = {lat: O.lat + ly / 110540, lng: O.lng + lx / k, acc: 4, t: Date.now()};
+  onGps();
+}
+async function photoData(id) {
+  if (!id) return null;
+  if (!S.photoCache[id]) S.photoCache[id] = await Store.get('ph:' + id);
+  return S.photoCache[id];
+}
+async function renderPhoto(x) {
+  const box = $('#phbox'); if (!box) return;
+  const src = await photoData(x.h.photo);
+  if (!src) {
+    box.innerHTML = `<p class="mute">Pas encore de photo pour ce trou. Prends le panneau du départ en photo : elle s'affichera aux prochaines parties.</p><button class="btn wide" onclick="$f('#fHole')">Prendre la photo du trou</button>`;
+    return;
+  }
+  const cal = x.h.calib;
+  let msg = '';
+  if (S.calib) msg = `<div class="warn">${S.calib.step === 1 ? 'Touche le <b>départ</b> sur la photo.' : 'Touche maintenant le <b>green</b> sur la photo.'}</div>`;
+  else if (!cal) msg = `<p class="mute">Cale la photo pour y voir ta position : il faut la position GPS du départ et du green de ce trou.</p>`;
+  box.innerHTML = msg + `<div class="photo" id="pwrap"><img id="pimg" alt="Trou ${x.i + 1}" src="${src}"><svg id="pov"></svg></div>
+    <div class="row" style="margin-top:8px"><button class="btn sm" onclick="G.calibStart()">${cal ? 'Recaler' : 'Caler la photo'}</button><button class="btn sm ghost" onclick="$f('#fHole')">Changer</button><button class="btn sm red" onclick="G.delPhoto()">Supprimer</button></div>`;
+  const img = $('#pimg');
+  const draw = () => {
+    const w = img.naturalWidth, h = img.naturalHeight, ov = $('#pov'); if (!w || !ov) return;
+    ov.setAttribute('viewBox', `0 0 ${w} ${h}`); ov.setAttribute('preserveAspectRatio', 'none');
+    if (S.calib) {
+      ov.innerHTML = S.calib.i1 ? `<circle cx="${S.calib.i1[0]}" cy="${S.calib.i1[1]}" r="${w / 60}" fill="#ffd23f" stroke="#000"/>` : '';
+      return;
+    }
+    if (!cal) { ov.innerHTML = ''; return; }
+    const Pp = photoProj(cal), u = w / 300;
+    let g = '', prev = x.st.start;
+    x.st.shots.forEach(sh => { const a = Pp(sh.from || prev), b = Pp(sh.to); g += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#ffd23f" stroke-width="${2 * u}"/><circle cx="${b[0]}" cy="${b[1]}" r="${4 * u}" fill="#fff" stroke="#000" stroke-width="${u}"/>`; prev = sh.to; });
+    if (x.cur) { const c = Pp(x.cur); g += `<circle cx="${c[0]}" cy="${c[1]}" r="${6 * u}" fill="#1f6fd1" stroke="#fff" stroke-width="${2 * u}"/>`; }
+    ov.innerHTML = g;
+  };
+  img.onload = draw; if (img.complete) draw();
+  $('#pwrap').onclick = e => {
+    if (!S.calib) return;
+    const r = img.getBoundingClientRect();
+    const p = [(e.clientX - r.left) * img.naturalWidth / r.width, (e.clientY - r.top) * img.naturalHeight / r.height];
+    if (S.calib.step === 1) { S.calib.i1 = p; S.calib.step = 2; renderPhoto(x); }
+    else {
+      x.h.calib = {i1: S.calib.i1, i2: p, w1: pt(x.tee), w2: pt(x.green)}; S.calib = null; save.courses();
+      toast('Photo calée'); renderPhoto(ctx());
+    }
+  };
+}
+function photoProj(cal) {
+  // similitude a deux points : monde (x, -y) vers image, en nombres complexes
+  const L = localXY(cal.w1);
+  const w2 = L(cal.w2), W2 = [w2[0], -w2[1]];
+  const D = [cal.i2[0] - cal.i1[0], cal.i2[1] - cal.i1[1]], den = W2[0] ** 2 + W2[1] ** 2 || 1;
+  const s = [(D[0] * W2[0] + D[1] * W2[1]) / den, (D[1] * W2[0] - D[0] * W2[1]) / den];
+  return p => { const q = L(p), a = q[0], b = -q[1]; return [cal.i1[0] + s[0] * a - s[1] * b, cal.i1[1] + s[0] * b + s[1] * a]; };
+}
+G.calibStart = () => {
+  const x = ctx();
+  if (!x.tee || !x.green) return toast('Il faut d\'abord la position du départ et du green de ce trou (import OSM ou boutons).', 4200);
+  S.calib = {step: 1}; renderPhoto(x);
+};
+G.delPhoto = async () => { const x = ctx(); if (!confirm('Supprimer la photo de ce trou ?')) return; await Store.del('ph:' + x.h.photo); x.h.photo = null; x.h.calib = null; await save.courses(); renderHoleView(); };
+window.$f = sel => $(sel).click();
+G.holePhoto = async input => {
+  const f = input.files[0]; input.value = ''; if (!f) return;
+  const x = ctx(); if (!x) return;
+  const data = await resizeImage(f, 1400, 0.78), id = uid();
+  await Store.set('ph:' + id, data); S.photoCache[id] = data;
+  if (x.h.photo) Store.del('ph:' + x.h.photo);
+  x.h.photo = id; x.h.calib = null; await save.courses();
+  x.r.mode = 'photo'; save.rounds(); renderHoleView(); toast('Photo enregistrée pour ce trou');
+};
+
+/* ---------- saisie des scores ---------- */
+function renderScores() {
+  const el = $('#scores'), x = ctx(); if (!el || !x) return;
+  const ranks = holeRanks(x.c), n = x.c.holes.length;
+  el.innerHTML = `<h3>Scores du trou ${x.i + 1}</h3>` + x.r.players.map((p, k) => {
+    const rec = strokesOn(p.ph, ranks[x.i], n), s = p.scores[x.i], pts = holePoints(x.c, p, x.i, ranks), t = totals(x.c, p);
+    return `<div class="prow"><div class="pn"><span class="dot" style="background:${teeHex(p.tee)}"></span>${esc(p.name)}<small>${rec ? (rec > 0 ? '+' + rec : rec) + ' coup' + (Math.abs(rec) > 1 ? 's' : '') + ' reçu' + (Math.abs(rec) > 1 ? 's' : '') + ' · ' : ''}${t.played ? 'Brut ' + signed(t.toPar) + ' · ' + t.sn + ' pts' : 'HCP de jeu ' + p.ph}</small></div>
+      <div class="stepper"><button onclick="G.sc(${k},-1)" aria-label="moins">-</button><b>${s ?? '\u2013'}</b><button onclick="G.sc(${k},1)" aria-label="plus">+</button></div>
+      <div class="pts">${pts != null ? '<b>' + pts + '</b>pts' : ''}</div>
+      ${p.me ? `<div class="putt">Putts <div class="stepper"><button onclick="G.pu(-1)">-</button><b>${p.putts[x.i] ?? '\u2013'}</b><button onclick="G.pu(1)">+</button></div>${x.st.shots.length ? '<span>· ' + x.st.shots.length + ' coup' + (x.st.shots.length > 1 ? 's' : '') + ' GPS</span>' : ''}</div>` : ''}</div>`;
+  }).join('');
+}
+G.sc = (k, d) => {
+  const x = ctx(), p = x.r.players[k];
+  let s = p.scores[x.i];
+  if (s == null) s = k === 0 && x.st.shots.length ? x.st.shots.length + (p.putts[x.i] || 0) : x.h.par || 4;
+  else s = Math.max(1, s + d);
+  p.scores[x.i] = s; save.rounds(); renderScores();
+};
+G.pu = d => { const x = ctx(), p = x.r.players[0]; let v = p.putts[x.i]; v = v == null ? 2 : Math.max(0, v + d); p.putts[x.i] = v; save.rounds(); renderScores(); };
+
+/* ---------- carte de score / bilan ---------- */
+V.round = ({id}) => {
+  const r = S.rounds.find(o => o.id === id); if (!r) return '<p>Partie introuvable.</p>';
+  const c = course(r.courseId); if (!c) return '<p>Parcours supprimé.</p>';
+  const ranks = holeRanks(c);
+  let h = `<section class="card"><h2>${esc(c.name)}</h2><p class="mute">${fmtDate(r.date)}${r.status === 'live' ? ' · en cours' : ''}</p>
+    <div class="scroll"><table><thead><tr><th class="l">Joueur</th><th>Dép.</th><th>HCP jeu</th><th>Brut</th><th>Net</th><th>Stbl net</th><th>Stbl brut</th></tr></thead><tbody>`;
+  for (const p of r.players) { const t = totals(c, p); h += `<tr><td class="l"><b>${esc(p.name)}</b></td><td><span class="dot" style="background:${teeHex(p.tee)}"></span></td><td>${p.ph}</td><td><b>${t.brut || '-'}</b> <small>${t.played ? signed(t.toPar) : ''}</small></td><td>${t.played ? t.net : '-'}</td><td><b>${t.sn}</b></td><td>${t.sb}</td></tr>`; }
+  h += `</tbody></table></div>`;
+  if (r.players.length >= 2) { const m = matchPlay(c, r.players[0], r.players[1]); if (m) h += `<p style="margin-top:10px">Match play net ${esc(r.players[0].name)} contre ${esc(r.players[1].name)} : <b>${esc(m)}</b></p>`; }
+  h += `</section><section class="card"><h3>Trou par trou</h3><div class="scroll"><table><thead><tr><th>Trou</th><th>Par</th><th>HCP</th>${r.players.map(p => `<th>${esc(p.name)}</th>`).join('')}<th>Putts</th></tr></thead><tbody>`;
+  c.holes.forEach((ho, i) => {
+    h += `<tr><td><b>${i + 1}</b></td><td>${ho.par}</td><td>${ho.hcp || '-'}</td>${r.players.map(p => { const s = p.scores[i], pts = holePoints(c, p, i, ranks); const cl = s == null ? '' : s < ho.par ? 'under' : s >= ho.par + 2 ? 'over2' : ''; return `<td class="${cl}">${s ?? '-'}${pts != null ? ' <small>(' + pts + ')</small>' : ''}</td>`; }).join('')}<td>${r.players[0].putts[i] ?? '-'}</td></tr>`;
+  });
+  h += `</tbody></table></div><p class="mute" style="margin-top:6px">Entre parenthèses : points stableford net.</p></section>`;
+  h += bilanHTML([r], 'Bilan des clubs du jour');
+  h += `<div class="grid2" style="margin-bottom:12px"><button class="btn y" onclick="G.pdf('${r.id}')">Carte PDF</button>${r.status === 'live' ? `<button class="btn" onclick="G.go('play')">Retour au jeu</button>` : `<button class="btn red" onclick="G.delRound('${r.id}')">Supprimer</button>`}</div>`;
+  return h;
+};
+function bilanHTML(rounds, title) {
+  const st = clubStats(rounds);
+  if (!st.length) return `<section class="card"><h3>${title}</h3><p class="mute">Aucun coup enregistré au GPS. Pendant la partie, appuie sur « Ma balle est ici » après chaque coup pour mesurer tes clubs.</p></section>`;
+  const maxD = Math.max(...st.map(s => Math.max(s.ref || 0, s.max || 0)), 1);
+  let h = `<section class="card"><h3>${title}</h3><div class="scroll"><table><thead><tr><th class="l">Club</th><th>Étalon</th><th>Moy.</th><th>Méd.</th><th>Écart</th><th>Pleins</th></tr></thead><tbody>`;
+  for (const s of st) {
+    const gap = s.med != null && s.ref ? Math.round(s.med - s.ref) : null;
+    h += `<tr><td class="l"><b>${esc(s.name)}</b><div class="bar" style="width:120px;margin-top:4px"><i style="width:${(s.med || 0) / maxD * 100}%"></i></div></td><td>${s.ref || '-'}</td><td>${s.avg != null ? Math.round(s.avg) : '-'}</td><td>${s.med != null ? Math.round(s.med) : '-'}</td><td class="${gap == null ? '' : gap < -8 ? 'over2' : gap > 8 ? 'under' : ''}">${gap == null ? '-' : (gap > 0 ? '+' : '') + gap}</td><td>${s.full.length}${s.partial ? ' <small>(+' + s.partial + ')</small>' : ''}</td></tr>`;
+  }
+  h += `</tbody></table></div><p class="mute" style="margin-top:6px">Entre parenthèses : coups partiels (green plus proche que la distance du club), exclus des moyennes.</p>`;
+  const adv = advice(st, rounds);
+  if (adv.length) h += `<h3 style="margin-top:12px">À travailler</h3>` + adv.map(([k, t]) => `<p style="font-size:15px">${k === 'work' ? '●' : '○'} ${esc(t)}</p>`).join('');
+  else if (st.some(s => s.full.length >= 2)) h += `<p style="margin-top:10px">Tes distances collent à ton étalonnage. Rien de flagrant à corriger sur ces coups.</p>`;
+  else h += `<p class="mute" style="margin-top:10px">Pas encore assez de coups pleins par club pour conclure (2 minimum par club).</p>`;
+  return h + `</section>`;
+}
+G.delRound = async id => { if (!confirm('Supprimer cette partie ?')) return; S.rounds = S.rounds.filter(r => r.id !== id); await save.rounds(); G.tab('history'); };
+
+/* ---------- PDF ---------- */
+function loadScript(src) { return new Promise((res, rej) => { if (window.jspdf) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Connexion nécessaire pour le premier PDF')); document.head.appendChild(s); }); }
+G.pdf = async id => {
+  const r = S.rounds.find(o => o.id === id), c = course(r.courseId);
+  try { toast('Création du PDF...'); await loadScript(JSPDF); } catch (e) { return toast(e.message); }
+  const {jsPDF} = window.jspdf, doc = new jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'});
+  const ranks = holeRanks(c), n = c.holes.length, me = r.players[0];
+  doc.setFillColor(15, 61, 46); doc.rect(0, 0, 297, 24, 'F');
+  doc.setTextColor(255); doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text(c.name, 12, 13);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.text(fmtDate(r.date) + (c.city ? '  ·  ' + c.city : ''), 12, 19.5);
+  doc.setTextColor(20);
+  // colonnes : trous 1-9, Aller, 10-18, Retour, Total
+  const cols = [];
+  for (let i = 0; i < Math.min(9, n); i++) cols.push({t: String(i + 1), h: [i]});
+  if (n > 9) { cols.push({t: 'Aller', h: [...Array(9).keys()], sum: true}); for (let i = 9; i < n; i++) cols.push({t: String(i + 1), h: [i]}); cols.push({t: 'Retour', h: [...Array(n - 9).keys()].map(k => k + 9), sum: true}); }
+  cols.push({t: 'Total', h: [...Array(n).keys()], sum: true});
+  const x0 = 10, lw = 34, cw = (297 - 20 - lw) / cols.length, rh = 7;
+  let y = 32;
+  const cellRow = (label, f, opts = {}) => {
+    if (opts.fill) { doc.setFillColor(...opts.fill); doc.rect(x0, y, lw + cw * cols.length, rh, 'F'); }
+    doc.setFont('helvetica', opts.bold ? 'bold' : 'normal'); doc.setFontSize(opts.size || 9);
+    doc.text(String(label), x0 + 2, y + 4.8);
+    cols.forEach((col, k) => { const v = f(col); if (v != null && v !== '') { const cx = x0 + lw + cw * k + cw / 2; if (opts.color) { const cc = opts.color(col); if (cc) doc.setTextColor(...cc); } doc.text(String(v), cx, y + 4.8, {align: 'center'}); doc.setTextColor(20); } });
+    doc.setDrawColor(210); doc.line(x0, y + rh, x0 + lw + cw * cols.length, y + rh); y += rh;
+  };
+  const sumOr = (col, g) => { const vals = col.h.map(g); if (vals.some(v => v == null)) return col.sum ? (vals.filter(v => v != null).reduce((a, b) => a + b, 0) || '') : ''; return vals.reduce((a, b) => a + b, 0); };
+  cellRow('Trou', col => col.t, {bold: true, fill: [230, 240, 233]});
+  cellRow('Distance (' + me.tee + ')', col => { const v = sumOr(col, i => num(c.holes[i].dist && c.holes[i].dist[me.tee])); return v || ''; });
+  cellRow('Par', col => sumOr(col, i => c.holes[i].par), {bold: true});
+  cellRow('Handicap', col => col.sum ? '' : c.holes[col.h[0]].hcp || '');
+  r.players.forEach(p => {
+    y += 1.5;
+    cellRow(p.name + ' (' + p.ph + ')', col => sumOr(col, i => p.scores[i]), {bold: true, fill: [248, 246, 232], size: 10,
+      color: col => { if (col.sum) return null; const i = col.h[0], s = p.scores[i]; if (s == null) return null; return s < c.holes[i].par ? [29, 138, 60] : s >= c.holes[i].par + 2 ? [201, 55, 44] : null; }});
+    cellRow('  points stableford', col => sumOr(col, i => holePoints(c, p, i, ranks)));
+    if (p.me) cellRow('  putts', col => sumOr(col, i => p.putts[i]));
+  });
+  doc.setDrawColor(150); doc.rect(x0, 32, lw + cw * cols.length, y - 32);
+  y += 10;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text('Résultats', x0, y); y += 6;
+  const head = ['Joueur', 'Index', 'Départ', 'HCP de jeu', 'Brut', 'Net', 'Stableford net', 'Stableford brut'];
+  const cw2 = [44, 22, 24, 26, 28, 22, 34, 34];
+  const line = (vals, bold) => { let xx = x0; doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(10); vals.forEach((v, k) => { doc.text(String(v), xx + 1, y); xx += cw2[k]; }); y += 6; };
+  line(head, true);
+  r.players.forEach(p => { const t = totals(c, p); line([p.name, p.index, p.tee, p.ph, t.brut + ' (' + (t.toPar > 0 ? '+' : '') + t.toPar + ')', t.net, t.sn + ' pts', t.sb + ' pts']); });
+  if (r.players.length >= 2) { const m = matchPlay(c, r.players[0], r.players[1]); if (m) { y += 2; doc.setFont('helvetica', 'normal'); doc.text('Match play net : ' + m, x0, y); y += 6; } }
+  const st = clubStats([r]);
+  if (st.length) {
+    if (y > 160) { doc.addPage(); y = 20; }
+    y += 4; doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text('Bilan des clubs (' + me.name + ')', x0, y); y += 6;
+    const cw3 = [40, 26, 26, 26, 26, 30]; const l3 = (vals, bold) => { let xx = x0; doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(10); vals.forEach((v, k) => { doc.text(String(v), xx + 1, y); xx += cw3[k]; }); y += 5.5; };
+    l3(['Club', 'Étalon (m)', 'Moyenne', 'Médiane', 'Écart', 'Coups pleins'], true);
+    st.forEach(s => l3([s.name, s.ref || '-', s.avg != null ? Math.round(s.avg) : '-', s.med != null ? Math.round(s.med) : '-', s.med != null && s.ref ? (s.med - s.ref > 0 ? '+' : '') + Math.round(s.med - s.ref) : '-', s.full.length]));
+    const adv = advice(st, [r]);
+    if (adv.length) { y += 3; doc.setFont('helvetica', 'bold'); doc.text('À travailler', x0, y); y += 5.5; doc.setFont('helvetica', 'normal'); adv.forEach(([, t]) => { const ls = doc.splitTextToSize('- ' + t, 270); if (y + ls.length * 5 > 200) { doc.addPage(); y = 20; } doc.text(ls, x0, y); y += ls.length * 5; }); }
+  }
+  doc.setFontSize(8); doc.setTextColor(140); doc.text('Caddie · carte générée le ' + new Date().toLocaleString('fr-FR'), x0, 205);
+  const safe = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_');
+  doc.save('Golf_' + safe(c.name) + '_' + r.date.slice(0, 10) + '.pdf');
+};
+
+/* ---------- historique ---------- */
+V.history = () => {
+  const done = S.rounds.filter(r => r.status === 'done').slice().reverse();
+  let h = `<section class="card"><h3>${done.length} partie${done.length > 1 ? 's' : ''}</h3>${done.length ? `<div class="list">${done.map(roundLine).join('')}</div>` : '<p class="mute">Tes parties terminées apparaîtront ici, avec leur carte en PDF.</p>'}</section>`;
+  if (done.length) h += bilanHTML(done, 'Bilan des clubs, toutes parties') + `<button class="btn wide ghost" style="margin-bottom:12px" onclick="G.updateCalib()">Mettre à jour mon étalonnage avec les médianes</button>`;
+  return h;
+};
+G.updateCalib = async () => {
+  const st = clubStats(S.rounds.filter(r => r.status === 'done')).filter(s => s.full.length >= 3 && !s.id.startsWith('n:'));
+  if (!st.length) return toast('Il faut au moins 3 coups pleins par club');
+  if (!confirm('Remplacer l\'étalonnage de ' + st.length + ' club(s) par la médiane mesurée ?')) return;
+  st.forEach(s => { const c = clubById(s.id); if (c) c.dist = Math.round(s.med); });
+  await save.profile(); toast('Étalonnage mis à jour'); render();
+};
+
+/* ---------- parcours ---------- */
+V.courses = () => {
+  let h = `<section class="card"><div class="grid2"><button class="btn" onclick="G.nearby()">Golfs autour de moi</button><button class="btn ghost" onclick="G.newCourse()">Créer à la main</button></div>
+    <p class="mute" style="margin:10px 0 0">Les golfs viennent d'OpenStreetMap (données libres). Complète ensuite avec une photo de la carte de score.</p></section>`;
+  h += `<section class="card"><h3>Mes parcours</h3>` + (S.courses.length ? `<div class="list">${S.courses.map(c => {
+    const gps = c.holes.filter(x => x.green).length;
+    return `<a href="#" onclick="G.go('course','${c.id}');return false"><span><b>${esc(c.name)}</b><br><small>${c.holes.length} trous · par ${coursePar(c)} · greens GPS ${gps}/${c.holes.length}</small></span><span class="row">${c.tees.map(t => `<span class="dot" style="background:${teeHex(t.color)}"></span>`).join('')}</span></a>`;
+  }).join('')}</div>` : '<p class="mute">Aucun parcours pour le moment.</p>') + `</section>`;
+  return h;
+};
+function blankHoles(n) { return Array.from({length: n}, (_, i) => ({n: i + 1, par: 4, hcp: null, dist: {}, tee: null, green: null, photo: null, calib: null})); }
+G.newCourse = async () => {
+  const c = {id: uid(), name: 'Nouveau parcours', city: '', lat: null, lng: null, holes: blankHoles(18), tees: [{color: 'Blanc', slope: 113, sss: 72, par: 72}, {color: 'Jaune', slope: 113, sss: 72, par: 72}, {color: 'Rouge', slope: 113, sss: 72, par: 72}], osm: null};
+  S.courses.push(c); await save.courses(); go('course', {id: c.id});
+};
+async function overpass(q) {
+  let err;
+  for (const u of OVERPASS) {
+    try {
+      const r = await fetch(u, {method: 'POST', body: 'data=' + encodeURIComponent(q), headers: {'Content-Type': 'application/x-www-form-urlencoded'}});
+      if (r.ok) return await r.json(); err = new Error('Serveur OSM occupé (' + r.status + ')');
+    } catch (e) { err = new Error('Pas de connexion au serveur OSM'); }
+  }
+  throw err;
+}
+G.nearby = async () => {
+  modal('<h3>Recherche des golfs...</h3><p class="mute">Position GPS puis OpenStreetMap, rayon 40 km.</p>');
+  try {
+    const p = await fix();
+    const j = await overpass(`[out:json][timeout:25];(way["leisure"="golf_course"](around:40000,${p.lat},${p.lng});relation["leisure"="golf_course"](around:40000,${p.lat},${p.lng}););out tags center;`);
+    const seen = new Set();
+    const list = j.elements.map(e => ({name: (e.tags && e.tags.name) || 'Golf sans nom', city: e.tags && (e.tags['addr:city'] || ''), lat: e.center ? e.center.lat : e.lat, lng: e.center ? e.center.lon : e.lon, holesTag: e.tags && e.tags['golf:course']}))
+      .filter(g => g.lat && !/practice|driving|pitch/i.test(g.name + ' ' + (g.holesTag || '')))
+      .map(g => ({...g, d: hav(p, g)})).sort((a, b) => a.d - b.d)
+      .filter(g => { const k = g.name + Math.round(g.d / 500); if (seen.has(k)) return false; seen.add(k); return true; });
+    window._golfs = list;
+    modal(`<h3>${list.length} golfs trouvés</h3><div class="list">${list.map((g, k) => {
+      const have = S.courses.find(c => c.name === g.name);
+      return `<div class="item"><span><b>${esc(g.name)}</b><br><small>${(g.d / 1000).toFixed(1)} km${g.city ? ' · ' + esc(g.city) : ''}</small></span>${have ? '<span class="chip">Déjà ajouté</span>' : `<button class="btn sm" onclick="G.addOsmGolf(${k})">Ajouter</button>`}</div>`;
+    }).join('')}</div><button class="btn ghost wide" style="margin-top:12px" onclick="G.closeModal()">Fermer</button>`);
+  } catch (e) { modal(`<h3>Recherche impossible</h3><p>${esc(e.message)}</p><button class="btn wide" onclick="G.closeModal()">OK</button>`); }
+};
+G.addOsmGolf = async k => {
+  const g = window._golfs[k];
+  const c = {id: uid(), name: g.name, city: g.city || '', lat: g.lat, lng: g.lng, center: {lat: g.lat, lng: g.lng}, holes: blankHoles(18), tees: [{color: 'Jaune', slope: 113, sss: 72, par: 72}], osm: null};
+  S.courses.push(c); await save.courses();
+  modal(`<h3>${esc(g.name)}</h3><p>Import des trous depuis OpenStreetMap... <span class="spin" style="border-color:#8886;border-top-color:var(--g2)"></span></p>`);
+  let msg;
+  try { msg = await importOsm(c); } catch (e) { msg = 'Import OSM impossible : ' + e.message; }
+  await save.courses(); G.closeModal(); go('course', {id: c.id}); toast(msg, 5000);
+};
+async function importOsm(c) {
+  const ce = c.center || (c.lat ? {lat: c.lat, lng: c.lng} : null) || GPS.pos;
+  if (!ce) throw new Error('position du golf inconnue');
+  const j = await overpass(`[out:json][timeout:60];(way["golf"](around:2200,${ce.lat},${ce.lng});way["natural"="water"](around:2200,${ce.lat},${ce.lng}););out geom;`);
+  const ways = j.elements.filter(e => e.type === 'way' && e.geometry && e.geometry.length > 1);
+  const simp = g => { const step = Math.max(1, Math.ceil(g.length / 60)); return g.filter((_, i) => i % step === 0 || i === g.length - 1).map(q => [+q.lat.toFixed(6), +q.lon.toFixed(6)]); };
+  const features = [];
+  for (const w of ways) {
+    const t = w.tags || {}, gt = t.golf;
+    let type = null;
+    if (gt === 'green' || gt === 'fairway' || gt === 'bunker' || gt === 'tee' || gt === 'rough') type = gt;
+    else if (gt === 'water_hazard' || gt === 'lateral_water_hazard' || t.natural === 'water') type = 'water';
+    if (type) features.push({t: type, p: simp(w.geometry)});
+  }
+  let holes = ways.filter(w => w.tags && w.tags.golf === 'hole' && parseInt(w.tags.ref) > 0);
+  const groupKey = w => w.tags['golf:course:name'] || w.tags['golf:course'] || '';
+  const refs = holes.map(w => parseInt(w.tags.ref));
+  if (new Set(refs).size < refs.length) {
+    // plusieurs parcours sur le site : on garde le groupe dont le nom colle, sinon les trous les plus proches
+    const groups = {}; holes.forEach(w => (groups[groupKey(w)] = groups[groupKey(w)] || []).push(w));
+    const names = Object.keys(groups).filter(Boolean);
+    const match = names.find(n => c.name.toLowerCase().includes(n.toLowerCase()) || n.toLowerCase().includes(c.name.toLowerCase()));
+    if (match) holes = groups[match];
+    else {
+      const best = {};
+      holes.forEach(w => { const r = parseInt(w.tags.ref), d = hav({lat: w.geometry[0].lat, lng: w.geometry[0].lon}, ce); if (!best[r] || d < best[r].d) best[r] = {w, d}; });
+      holes = Object.values(best).map(o => o.w);
+    }
+  }
+  c.osm = {features, date: new Date().toISOString()};
+  if (!holes.length) return `Aucun trou tracé sur OpenStreetMap pour ce golf (${features.filter(f => f.t === 'green').length} greens dessinés). Les positions se rempliront pendant tes parties.`;
+  const n = Math.min(18, Math.max(...holes.map(w => parseInt(w.tags.ref))));
+  const N = n <= 9 ? 9 : 18;
+  if (c.holes.length !== N) { const old = c.holes; c.holes = blankHoles(N).map((h, i) => old[i] ? {...old[i], n: i + 1} : h); }
+  let cnt = 0;
+  for (const w of holes) {
+    const k = parseInt(w.tags.ref) - 1; if (k >= N) continue;
+    const h = c.holes[k], g = w.geometry;
+    h.tee = {lat: g[0].lat, lng: g[0].lon}; h.green = {lat: g[g.length - 1].lat, lng: g[g.length - 1].lon};
+    if (w.tags.par) h.par = parseInt(w.tags.par) || h.par;
+    if (w.tags.handicap) h.hcp = parseInt(w.tags.handicap) || h.hcp;
+    let L = 0; for (let i = 1; i < g.length; i++) L += hav({lat: g[i - 1].lat, lng: g[i - 1].lon}, {lat: g[i].lat, lng: g[i].lon});
+    h.osmLen = Math.round(L);
+    for (const t of c.tees) if (!num(h.dist[t.color])) h.dist[t.color] = h.osmLen;
+    cnt++;
+  }
+  const par = coursePar(c); c.tees.forEach(t => { if (!t.par || t.par === 72) t.par = par; if (!t.sss || t.sss === 72) t.sss = par; });
+  if (c.holes[0].tee && !c.lat) { c.lat = c.holes[0].tee.lat; c.lng = c.holes[0].tee.lng; }
+  return `${cnt} trous importés avec départ et green GPS. Distances provisoires mesurées sur la carte : photographie la carte de score pour les vraies valeurs.`;
+}
+V.course = ({id}) => {
+  const c = course(id); if (!c) return '<p>Parcours introuvable.</p>';
+  let h = `<section class="card"><label class="f">Nom<input value="${esc(c.name)}" onchange="G.cset('${id}','name',this.value)"></label>
+    <div class="grid2"><label class="f">Ville<input value="${esc(c.city)}" onchange="G.cset('${id}','city',this.value)"></label>
+    <label class="f">Trous<select onchange="G.nholes('${id}',this.value)"><option ${c.holes.length === 18 ? 'selected' : ''}>18</option><option ${c.holes.length === 9 ? 'selected' : ''}>9</option></select></label></div>
+    <p class="mute" style="margin:0">${c.lat ? 'Repère GPS enregistré : le parcours sera proposé automatiquement.' : 'Repère GPS enregistré au premier départ.'}</p></section>
+  <section class="card"><h3>Remplir automatiquement</h3><div class="grid2"><button class="btn y" onclick="G.cardStart('${id}')">Photo de la carte</button><button class="btn ghost" onclick="G.reOsm('${id}')">Import OSM</button></div>
+    <p class="mute" style="margin:8px 0 0">Recto et verso possibles. Tu vérifies tout avant de jouer.</p></section>`;
+  h += `<section class="card"><h3>Départs</h3><div class="scroll"><table><thead><tr><th class="l">Couleur</th><th>Slope</th><th>SSS</th><th>Par</th><th></th></tr></thead><tbody>${c.tees.map((t, k) => `<tr>
+    <td class="l"><select onchange="G.tset('${id}',${k},'color',this.value)" style="min-height:38px;padding:6px">${Object.keys(TEE).map(col => `<option ${col === t.color ? 'selected' : ''}>${col}</option>`).join('')}</select></td>
+    <td><input inputmode="numeric" value="${t.slope ?? ''}" onchange="G.tset('${id}',${k},'slope',this.value)"></td>
+    <td><input inputmode="decimal" value="${t.sss ?? ''}" onchange="G.tset('${id}',${k},'sss',this.value)"></td>
+    <td><input inputmode="numeric" value="${t.par ?? ''}" onchange="G.tset('${id}',${k},'par',this.value)"></td>
+    <td><button class="btn sm ghost" onclick="G.trm('${id}',${k})" aria-label="Supprimer">×</button></td></tr>`).join('')}</tbody></table></div>
+    <button class="btn sm ghost" style="margin-top:8px" onclick="G.tadd('${id}')">+ Ajouter un départ</button></section>`;
+  h += `<section class="card"><h3>Trous</h3><div class="scroll"><table><thead><tr><th>N°</th><th>Par</th><th>HCP</th>${c.tees.map(t => `<th><span class="dot" style="background:${teeHex(t.color)}"></span></th>`).join('')}<th>GPS</th></tr></thead><tbody>${c.holes.map((ho, i) => `<tr><td><b>${i + 1}</b></td>
+    <td><input inputmode="numeric" value="${ho.par ?? ''}" onchange="G.hset('${id}',${i},'par',this.value)" style="width:42px"></td>
+    <td><input inputmode="numeric" value="${ho.hcp ?? ''}" onchange="G.hset('${id}',${i},'hcp',this.value)" style="width:42px"></td>
+    ${c.tees.map(t => `<td><input inputmode="numeric" value="${ho.dist[t.color] ?? ''}" onchange="G.dset('${id}',${i},'${t.color}',this.value)" style="width:54px"></td>`).join('')}
+    <td><small title="départ / green">${ho.tee ? 'D' : '·'}${ho.green ? 'G' : '·'}${ho.photo ? 'P' : ''}</small></td></tr>`).join('')}
+    <tr><td><b>Tot</b></td><td><b>${coursePar(c)}</b></td><td></td>${c.tees.map(t => `<td><b>${teeLength(c, t.color) || ''}</b></td>`).join('')}<td></td></tr></tbody></table></div>
+    <p class="mute" style="margin:8px 0 0">GPS : D départ, G green, P photo du trou. Les positions se complètent pendant tes parties.</p></section>
+  <button class="btn red wide" style="margin-bottom:12px" onclick="G.delCourse('${id}')">Supprimer ce parcours</button>`;
+  return h;
+};
+G.cset = (id, k, v) => { course(id)[k] = v.trim(); save.courses(); };
+G.hset = (id, i, k, v) => { course(id).holes[i][k] = num(v); save.courses(); };
+G.dset = (id, i, col, v) => { course(id).holes[i].dist[col] = num(v); save.courses(); };
+G.tset = (id, k, f, v) => {
+  const c = course(id), t = c.tees[k];
+  if (f === 'color') { c.holes.forEach(h => { if (h.dist[t.color] != null) { h.dist[v] = h.dist[t.color]; delete h.dist[t.color]; } }); t.color = v; render(); }
+  else t[f] = num(v);
+  save.courses();
+};
+G.tadd = id => { const c = course(id), used = c.tees.map(t => t.color), col = Object.keys(TEE).find(k => !used.includes(k)) || 'Blanc'; c.tees.push({color: col, slope: 113, sss: coursePar(c), par: coursePar(c)}); save.courses(); render(); };
+G.trm = (id, k) => { course(id).tees.splice(k, 1); save.courses(); render(); };
+G.nholes = (id, v) => { const c = course(id), n = +v, old = c.holes; c.holes = blankHoles(n).map((h, i) => old[i] || h); save.courses(); render(); };
+G.delCourse = async id => { if (!confirm('Supprimer ce parcours et ses photos ?')) return; const c = course(id); for (const h of c.holes) if (h.photo) await Store.del('ph:' + h.photo); S.courses = S.courses.filter(x => x.id !== id); await save.courses(); G.tab('courses'); };
+G.reOsm = async id => {
+  const c = course(id);
+  if (!c.center && !c.lat) { try { const p = await fix(); c.center = {lat: p.lat, lng: p.lng}; } catch (e) { return toast('Position inconnue : va sur place ou utilise « Golfs autour de moi »'); } }
+  toast('Import OSM en cours...');
+  try { const m = await importOsm(c); await save.courses(); render(); toast(m, 5000); } catch (e) { toast('Import impossible : ' + e.message, 4000); }
+};
+
+/* ---------- lecture de la carte de score par IA ---------- */
+let cardTarget = null;
+G.cardStart = id => {
+  if (!S.profile.apiKey) { modal(`<h3>Clé API nécessaire</h3><p>La lecture des cartes passe par l'API Claude (moins d'un centime par carte). Ajoute ta clé dans Profil &gt; Lecture des cartes.</p><button class="btn wide" onclick="G.closeModal();G.tab('profile')">Aller au profil</button>`); return; }
+  cardTarget = id; $f('#fCard');
+};
+function resizeImage(file, max, q) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { const k = Math.min(1, max / Math.max(img.width, img.height)), cv = document.createElement('canvas'); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url); res(cv.toDataURL('image/jpeg', q)); };
+    img.onerror = () => rej(new Error('Image illisible')); img.src = url;
+  });
+}
+const CARD_PROMPT = `Tu lis une carte de score de golf (une ou plusieurs photos : recto, verso). Extrait les donnees et reponds UNIQUEMENT avec un JSON valide, sans texte autour, de cette forme :
+{"name": "nom du golf ou null", "holes": [{"n": 1, "par": 4, "hcp": 7, "dist": {"Blanc": 350, "Jaune": 330, "Rouge": 290}}], "tees": [{"color": "Jaune", "slope": 130, "sss": 71.2, "par": 72}]}
+Regles : distances en metres (si la carte est en yards, convertis : yards x 0.9144, arrondi). Couleurs de depart en francais parmi : Noir, Blanc, Jaune, Bleu, Rouge, Orange, Vert, Violet. "hcp" est le handicap (index de difficulte) du trou. Si slope ou SSS existent par couleur (parfois homme et femme), mets les valeurs homme pour Blanc/Jaune et femme pour Bleu/Rouge. Une valeur illisible vaut null. Ne rien inventer.`;
+G.cardFiles = async input => {
+  const files = [...input.files]; input.value = ''; if (!files.length || !cardTarget) return;
+  const c = course(cardTarget);
+  modal(`<h3>Lecture de la carte...</h3><p class="mute">${files.length} photo${files.length > 1 ? 's' : ''} envoyée${files.length > 1 ? 's' : ''} à Claude. Compte 10 à 30 secondes.</p>`);
+  try {
+    const imgs = await Promise.all(files.map(f => resizeImage(f, 1600, 0.85)));
+    const res = await fetch('https://api.anthropic.com/v1/messages', {method: 'POST', headers: {'content-type': 'application/json', 'x-api-key': S.profile.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'},
+      body: JSON.stringify({model: S.profile.model || 'claude-sonnet-5-5', max_tokens: 4000, messages: [{role: 'user', content: [...imgs.map(d => ({type: 'image', source: {type: 'base64', media_type: 'image/jpeg', data: d.split(',')[1]}})), {type: 'text', text: CARD_PROMPT}]}]})});
+    if (!res.ok) { const t = await res.text(); throw new Error(res.status === 401 ? 'Clé API refusée' : 'Erreur API ' + res.status + ' : ' + t.slice(0, 160)); }
+    const j = await res.json(), txt = j.content.map(b => b.text || '').join(''), m = txt.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Réponse illisible');
+    applyCard(c, JSON.parse(m[0]));
+    await save.courses(); G.closeModal(); render();
+    toast('Carte lue : vérifie les valeurs ci-dessous', 4500);
+  } catch (e) { modal(`<h3>Lecture impossible</h3><p>${esc(e.message)}</p><button class="btn wide" onclick="G.closeModal()">OK</button>`); }
+};
+function applyCard(c, d) {
+  const normCol = s => { if (!s) return null; const k = String(s).trim(); const cap = k.charAt(0).toUpperCase() + k.slice(1).toLowerCase(); return TEE[cap] ? cap : TEE_EN[k.toLowerCase()] || null; };
+  if (d.name && (!c.name || c.name === 'Nouveau parcours')) c.name = d.name;
+  const H = (d.holes || []).filter(h => h && h.n >= 1 && h.n <= 18);
+  if (H.length) {
+    const N = Math.max(...H.map(h => h.n)) > 9 ? 18 : 9;
+    if (c.holes.length !== N) { const old = c.holes; c.holes = blankHoles(N).map((h, i) => old[i] || h); }
+    for (const h of H) {
+      const t = c.holes[h.n - 1]; if (!t) continue;
+      if (num(h.par)) t.par = num(h.par); if (num(h.hcp)) t.hcp = num(h.hcp);
+      for (const [col, v] of Object.entries(h.dist || {})) { const cc = normCol(col); if (cc && num(v)) t.dist[cc] = Math.round(num(v)); }
+    }
+  }
+  const tees = (d.tees || []).map(t => ({color: normCol(t.color), slope: num(t.slope), sss: num(t.sss), par: num(t.par)})).filter(t => t.color);
+  const cols = new Set(tees.map(t => t.color)); c.holes.forEach(h => Object.keys(h.dist).forEach(k => cols.add(k)));
+  const par = coursePar(c);
+  c.tees = [...cols].map(col => { const t = tees.find(x => x.color === col) || c.tees.find(x => x.color === col) || {}; return {color: col, slope: t.slope || 113, sss: t.sss || par, par: t.par || par}; });
+  // on retire les distances OSM provisoires des couleurs absentes de la carte
+  c.holes.forEach(h => Object.keys(h.dist).forEach(k => { if (!cols.has(k)) delete h.dist[k]; }));
+}
+
+/* ---------- profil ---------- */
+V.profile = () => {
+  const p = S.profile;
+  return `<section class="card"><h3>Joueur</h3>
+    <label class="f">Nom<input value="${esc(p.name)}" onchange="G.pset('name',this.value)"></label>
+    <div class="grid2"><label class="f">Index<input inputmode="decimal" value="${esc(p.index)}" onchange="G.pset('index',this.value)"></label>
+    <label class="f">Départ habituel<select onchange="G.pset('tee',this.value)">${Object.keys(TEE).map(c => `<option ${c === p.tee ? 'selected' : ''}>${c}</option>`).join('')}</select></label></div></section>
+  <section class="card"><h3>Mes clubs et distances (m)</h3><p class="mute">Distance totale moyenne d'un coup plein. Sert au conseil de club et au bilan.</p>
+    ${p.clubs.map((c, k) => `<div class="row" style="margin-bottom:6px;flex-wrap:nowrap"><input value="${esc(c.name)}" onchange="G.clset(${k},'name',this.value)" style="flex:1"><input inputmode="numeric" value="${c.dist}" onchange="G.clset(${k},'dist',this.value)" style="width:80px;text-align:center"><button class="btn sm ghost" onclick="G.clrm(${k})" aria-label="Supprimer">×</button></div>`).join('')}
+    <button class="btn sm ghost" onclick="G.cladd()">+ Ajouter un club</button></section>
+  <section class="card"><h3>Invités enregistrés</h3>${S.guests.length ? S.guests.map(g => `<div class="item"><span><b>${esc(g.name)}</b> <small>index ${g.index}${g.driver ? ' · driver ' + g.driver + ' m' : ''}</small></span><button class="btn sm ghost" onclick="G.grm('${g.id}')">Retirer</button></div>`).join('') : '<p class="mute">Aucun invité.</p>'}
+    <button class="btn sm ghost" onclick="G.newGuest()">+ Ajouter un invité</button></section>
+  <section class="card"><h3>Lecture des cartes (API Claude)</h3><p class="mute">Clé créée sur console.anthropic.com. Elle reste sur ce téléphone.</p>
+    <label class="f">Clé API<input type="password" autocomplete="off" value="${esc(p.apiKey)}" onchange="G.pset('apiKey',this.value.trim())" placeholder="sk-ant-..."></label>
+    <label class="f">Modèle<input value="${esc(p.model)}" onchange="G.pset('model',this.value.trim())"></label></section>
+  <section class="card"><h3>Test et sauvegarde</h3>
+    <label class="row" style="margin-bottom:12px"><input type="checkbox" ${S.sim ? 'checked' : ''} onchange="G.sim(this.checked)" style="min-height:auto;width:22px;height:22px"> Mode simulation (toucher le schéma remplace le GPS)</label>
+    <div class="grid2"><button class="btn ghost" onclick="G.exportData()">Exporter</button><button class="btn ghost" onclick="$f('#fImport')">Importer</button></div>
+    <p class="mute" style="margin:8px 0 0">Les données sont stockées sur ce téléphone. Exporte régulièrement pour garder une copie.</p></section>`;
+};
+G.pset = (k, v) => { S.profile[k] = k === 'index' ? num(v, 54) : v; save.profile(); };
+G.clset = (k, f, v) => { S.profile.clubs[k][f] = f === 'dist' ? (num(v, 0)) : v; save.profile(); };
+G.clrm = k => { S.profile.clubs.splice(k, 1); save.profile(); render(); };
+G.cladd = () => { S.profile.clubs.push({id: uid(), name: 'Club', dist: 100}); save.profile(); render(); };
+G.grm = id => { S.guests = S.guests.filter(g => g.id !== id); save.guests(); render(); };
+G.sim = on => { S.sim = on; if (on && !GPS.pos) { const c = S.courses.find(c => c.holes[0].tee); if (c) GPS.pos = {...c.holes[0].tee, acc: 4, t: Date.now()}; } gpsBadge(); toast(on ? 'Simulation active : touche le schéma pendant une partie' : 'GPS réel'); };
+G.exportData = async () => {
+  const photos = {};
+  for (const c of S.courses) for (const h of c.holes) if (h.photo) photos[h.photo] = await photoData(h.photo);
+  const blob = new Blob([JSON.stringify({v: 1, profile: S.profile, guests: S.guests, courses: S.courses, rounds: S.rounds, photos})], {type: 'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'caddie-sauvegarde-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+};
+G.importData = async input => {
+  const f = input.files[0]; input.value = ''; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) return;
+    S.profile = d.profile; S.guests = d.guests || []; S.courses = d.courses || []; S.rounds = d.rounds || [];
+    for (const [k, v] of Object.entries(d.photos || {})) await Store.set('ph:' + k, v);
+    await Promise.all([save.profile(), save.guests(), save.courses(), save.rounds()]); toast('Sauvegarde importée'); render();
+  } catch (e) { toast('Fichier invalide'); }
+};
+
+/* ---------- demarrage ---------- */
+(async () => {
+  await Store.open();
+  S.profile = await Store.get('profile') || defaultProfile();
+  S.guests = await Store.get('guests') || [];
+  S.courses = await Store.get('courses') || [];
+  S.rounds = await Store.get('rounds') || [];
+  if (!await Store.get('profile')) save.profile();
+  S.view = liveRound() ? 'play' : 'home';
+  render();
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+}
+</script>
+</body>
+</html>
