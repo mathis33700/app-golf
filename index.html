@@ -3,124 +3,155 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f3d2e">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141518" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Caddie</title>
 <style>
-/* VOICE: carnet de caddie, net et lisible en plein soleil
-   IDEA: la carte de score et le carnet de parcours
-   PICTURE: le trou dessine, la distance au green en tres grand
-   COLOUR: vert fairway profond, blanc, jaune drapeau en accent
-   TYPE/LAYOUT: system UI, une colonne, gros boutons pouce */
-:root{--g:#0f3d2e;--g2:#1d5c44;--fw:#5fae55;--y:#ffd23f;--bg:#f3f5f1;--card:#fff;--ink:#14211b;--mute:#5d6b63;--line:#dfe5df;--red:#c9372c;--blue:#1f6fd1}
-@media (prefers-color-scheme:dark){:root{--bg:#0b1511;--card:#13221b;--ink:#eef3ef;--mute:#9db0a5;--line:#24372e}}
+/* Caddie : instrument de mesure, a la maniere d'une montre de golf.
+   Neutre (blanc, gris, noir pur), un seul accent bleu pour "toi" et les selections,
+   le vert reserve au dessin du trou. Chiffres en Barlow Condensed, tres grands. */
+:root{
+  --bg:#f2f3f5;--card:#fff;--soft:#f2f3f5;--ink:#000;--ink2:#2b2f36;--mute:#676d76;--line:#e1e3e7;
+  --acc:#0a66e8;--flag:#e2312b;--ok:#17803f;--bad:#d2302a;--warnbg:#fff4d4;--warnink:#563f00;
+  --btn:#000;--btnink:#fff;--shadow:0 1px 2px #0000000f;
+  --sv-rough:#e7ece4;--sv-fw:#b4d0a3;--sv-green:#84c071;--sv-tee:#c6dcbb;--sv-bunker:#eee0b5;--sv-water:#9ccbeb;--sv-text:#000;--sv-halo:#fff;
+  --num:"Barlow Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#000;--card:#141518;--soft:#1d1f23;--ink:#fff;--ink2:#d9dce1;--mute:#8e949d;--line:#27292e;
+  --acc:#3d8bff;--warnbg:#2c240e;--warnink:#ffe19d;--btn:#fff;--btnink:#000;--shadow:none;
+  --sv-rough:#171b18;--sv-fw:#365f32;--sv-green:#56a046;--sv-tee:#2a4527;--sv-bunker:#b9a97e;--sv-water:#2b6a98;--sv-text:#fff;--sv-halo:#000;
+  color-scheme:dark;
+}}
 *{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
-header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;background:var(--g);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;min-height:56px}
-header h1{font-size:19px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#back{background:none;border:0;color:#fff;font-size:30px;line-height:1;width:40px;height:40px;visibility:hidden}
-#gpsdot{display:flex;align-items:center;gap:6px;font-size:12px;opacity:.9}
-#gpsdot i{width:10px;height:10px;border-radius:50%;background:#8a9a91;display:inline-block}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.45 Barlow,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:6px;background:var(--card);color:var(--ink);border-bottom:1px solid var(--line);padding:calc(6px + env(safe-area-inset-top)) 10px 6px;min-height:54px}
+header h1{font:600 20px/1.1 var(--num);letter-spacing:.2px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#back{background:none;border:0;color:var(--ink);font-size:30px;line-height:1;width:44px;height:44px;visibility:hidden}
+#gpsdot{display:flex;align-items:center;gap:6px;font:600 14px var(--num);color:var(--mute);font-variant-numeric:tabular-nums}
+#gpsdot i{width:9px;height:9px;border-radius:50%;background:#9aa0a8;display:inline-block}
 main{max-width:640px;margin:0 auto;padding:12px}
 nav#tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav#tabs button{background:none;border:0;color:var(--mute);padding:10px 0 12px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav#tabs button{position:relative;background:none;border:0;color:var(--mute);padding:9px 0 10px;font:500 13px Barlow,system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px}
 nav#tabs button svg{width:24px;height:24px}
-nav#tabs button.on{color:var(--g2);font-weight:700}
-@media (prefers-color-scheme:dark){nav#tabs button.on{color:var(--y)}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px}
-.hero{background:var(--g);color:#fff;border:0}
-.hero p{color:#cfe3d8}
-h2{font-size:22px;margin:0 0 6px;line-height:1.15}
-h3{font-size:16px;margin:0 0 8px}
-.k{font-size:13px;text-transform:none;color:var(--mute);margin:0 0 4px}
-.hero .k{color:var(--y)}
+nav#tabs button.on{color:var(--ink);font-weight:700}
+nav#tabs button.on::before{content:"";position:absolute;top:-1px;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 12px;box-shadow:var(--shadow)}
+.hero{border-color:var(--ink);border-width:1.5px}
+h2{font:700 30px/1.05 var(--num);margin:0 0 6px;letter-spacing:.2px}
+h3{font:600 17px/1.2 Barlow,system-ui,sans-serif;margin:0 0 10px}
+.k{font-size:14px;color:var(--mute);margin:0 0 2px}
 p{margin:0 0 10px}
-small,.mute{color:var(--mute);font-size:13px}
-a{color:inherit;text-decoration:underline;text-underline-offset:2px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 16px;border-radius:12px;border:0;background:var(--g2);color:#fff;font-size:16px;font-weight:600;cursor:pointer}
-.btn.y{background:var(--y);color:#1b1b1b}
-.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
-.btn.red{background:transparent;color:var(--red);border:1.5px solid var(--red)}
-.btn.big{min-height:58px;font-size:18px;width:100%}
-.btn.sm{min-height:38px;font-size:14px;padding:0 12px}
+small,.mute{color:var(--mute);font-size:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:12px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);font:600 17px Barlow,system-ui,sans-serif;cursor:pointer;line-height:1.1;text-align:center}
+.btn.y{background:var(--btn);border-color:var(--btn);color:var(--btnink)}
+.btn.ghost{border-color:var(--line);background:var(--card)}
+.btn.red{border-color:var(--bad);color:var(--bad);background:transparent}
+.btn.big{min-height:60px;font-size:19px;width:100%}
+.btn.sm{min-height:44px;font-size:15px;padding:0 14px}
 .btn.wide{width:100%}
-.btn:disabled{opacity:.45}
+.btn:disabled{opacity:.35}
+.btn:active,.clubs button:active,.stepper button:active,.nav:active{transform:scale(.98)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .between{justify-content:space-between}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-label.f{display:block;margin:0 0 10px;font-size:13px;color:var(--mute)}
+label.f{display:block;margin:0 0 12px;font-size:14px;color:var(--mute)}
 label.f input,label.f select{display:block;width:100%;margin-top:4px}
-input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:10px;min-height:44px}
-input:focus,select:focus,button:focus-visible{outline:2px solid var(--fw);outline-offset:1px}
-.list a,.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
-.item:last-child{border-bottom:0}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;border:1.5px solid var(--line);font-size:13px;background:var(--card);color:var(--ink)}
-.chip.on{border-color:var(--g2);background:var(--g2);color:#fff}
-.dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #0003;flex:none}
-.badge{font-size:11px;background:var(--y);color:#222;border-radius:6px;padding:1px 6px;font-weight:700}
-/* play */
-.holebar{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;background:var(--g);color:#fff;border-radius:14px;padding:8px;margin-bottom:12px;text-align:center}
-.holebar .nav{background:#ffffff1f;border:0;color:#fff;font-size:28px;height:52px;border-radius:10px}
-.hn{font-size:24px;font-weight:800}
-.hm{font-size:14px;color:#cfe3d8}
-.live{display:grid;grid-template-columns:1.3fr 1fr;gap:10px;align-items:center}
-.bigd{font-size:clamp(54px,18vw,84px);font-weight:800;line-height:.95;letter-spacing:-2px;font-variant-numeric:tabular-nums}
-.bigd small{font-size:20px;letter-spacing:0;color:var(--mute);font-weight:600}
-.fb{font-size:14px;color:var(--mute);font-variant-numeric:tabular-nums}
-.fb b{color:var(--ink);font-size:18px}
-.adv{background:var(--y);color:#1b1b1b;border-radius:12px;padding:10px;text-align:center}
-.adv b{display:block;font-size:22px}
+input,select{font:inherit;font-size:17px;color:var(--ink);background:var(--soft);border:1.5px solid transparent;border-radius:10px;padding:10px 12px;min-height:46px}
+input:focus,select:focus{border-color:var(--ink);outline:none}
+button:focus-visible,a:focus-visible{outline:2.5px solid var(--acc);outline-offset:2px}
+.list a,.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);color:inherit;text-decoration:none}
+.list a:last-child,.item:last-child{border-bottom:0}
+.list a b,.item b{font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:4px 12px;border-radius:99px;border:1.5px solid var(--line);font:500 15px Barlow,system-ui,sans-serif;background:var(--card);color:var(--ink)}
+.chip.on{border-color:var(--ink);background:var(--ink);color:var(--card)}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #0004;flex:none}
+.badge{font:600 12px Barlow,system-ui,sans-serif;background:var(--acc);color:#fff;border-radius:6px;padding:1px 7px}
+/* ecran de jeu */
+.holebar{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:6px;margin:0 0 10px}
+.holebar .nav{background:var(--card);border:1.5px solid var(--line);color:var(--ink);font-size:30px;height:52px;border-radius:12px}
+.holebar .nav:disabled{opacity:.3}
+.hn{font:700 34px/1 var(--num);text-align:center}
+.hstats{display:flex;justify-content:center;gap:18px;margin:4px 0 0}
+.hstats div{display:flex;align-items:baseline;gap:5px}
+.hstats dt{font-size:14px;color:var(--mute)}
+.hstats dd{margin:0;font:600 20px/1 var(--num);font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:5px}
+.live{padding:6px 16px 14px}
+.dist{display:grid;grid-template-columns:1fr;justify-items:center;text-align:center}
+.fbk{display:flex;align-items:baseline;gap:8px;font:600 26px/1 var(--num);font-variant-numeric:tabular-nums;color:var(--ink2);padding:6px 0}
+.fbk span{font:500 15px Barlow,system-ui,sans-serif;color:var(--mute);width:44px;text-align:right}
+.fbk span+b{min-width:44px;text-align:left}
+.mid{display:flex;flex-direction:column;align-items:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line);width:100%;padding:2px 0 8px}
+.bigd{font:700 clamp(104px,34vw,150px)/.9 var(--num);letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.mid span{font-size:15px;color:var(--mute)}
+.far{text-align:center;padding:18px 0 10px}
+.far b{display:block;font:700 58px/1 var(--num)}
+.far span{color:var(--mute);font-size:15px}
+.wait{text-align:center;padding:26px 0;color:var(--mute)}
+.advrow{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-top:12px;font-size:15px;color:var(--mute)}
+.advrow b{color:var(--ink);font:600 22px/1 var(--num);margin-left:6px}
 .clubs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.clubs button{min-height:50px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:13px;font-weight:600;line-height:1.1;padding:4px}
-.clubs button small{display:block;font-weight:400;font-size:11px}
-.clubs button.rec{border-color:var(--y);box-shadow:inset 0 0 0 2px var(--y)}
-.clubs button.on{background:var(--g2);border-color:var(--g2);color:#fff}
-.clubs button.on small{color:#cfe3d8}
+.clubs button{min-height:54px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font:600 15px/1.1 Barlow,system-ui,sans-serif;padding:4px}
+.clubs button small{display:block;font:500 15px var(--num);color:var(--mute);margin-top:2px}
+.clubs button.rec{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.clubs button.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.clubs button.on small{color:var(--card);opacity:.75}
 .actions{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:12px}
-.actions .btn{min-height:60px}
-.seg{display:flex;background:var(--bg);border-radius:10px;padding:3px;gap:3px;margin-bottom:10px}
-.seg button{flex:1;border:0;background:none;color:var(--mute);padding:8px;border-radius:8px;font-weight:600;font-size:14px}
+.actions .btn{min-height:64px}
+.actions .btn small{display:block;font-weight:500;font-size:14px;opacity:.75}
+.seg{display:flex;background:var(--soft);border-radius:12px;padding:3px;gap:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:none;color:var(--mute);min-height:40px;border-radius:9px;font:600 15px Barlow,system-ui,sans-serif}
 .seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #0002}
-.fig{position:relative;width:100%;aspect-ratio:34/44;border-radius:12px;overflow:hidden;background:#2f6b3a}
+.fig{position:relative;width:100%;aspect-ratio:34/44;border-radius:12px;overflow:hidden;background:var(--sv-rough)}
 .fig svg{position:absolute;inset:0;width:100%;height:100%}
+.fig .rough{fill:var(--sv-rough)}.fig .fairway{fill:var(--sv-fw)}.fig .green{fill:var(--sv-green)}.fig .tee{fill:var(--sv-tee)}.fig .bunker{fill:var(--sv-bunker)}.fig .water{fill:var(--sv-water)}
+.fig .lbl{fill:var(--sv-text);stroke:var(--sv-halo);stroke-width:3.5px;paint-order:stroke;font-family:var(--num);font-weight:700}
+.fig .lbl.soft{fill:var(--mute);stroke:none;font-family:Barlow,system-ui,sans-serif;font-weight:500}
+.fig .shot{stroke:var(--sv-text)}
+.fig .aim{stroke:var(--sv-text);stroke-opacity:.35}
 .photo{position:relative}
 .photo img{display:block;width:100%;border-radius:12px}
 .photo svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.prow{display:grid;grid-template-columns:1fr auto 64px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.prow{display:grid;grid-template-columns:1fr auto 56px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .prow:last-child{border-bottom:0}
-.pn{font-weight:700;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pn{font-weight:600;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .pn small{font-weight:400;width:100%}
 .stepper{display:flex;align-items:center;gap:4px}
-.stepper button{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:22px;font-weight:700}
-.stepper b{min-width:34px;text-align:center;font-size:24px;font-variant-numeric:tabular-nums}
+.stepper button{width:48px;height:48px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font-size:24px;font-weight:600}
+.stepper b{min-width:36px;text-align:center;font:700 30px/1 var(--num);font-variant-numeric:tabular-nums}
 .pts{text-align:right;font-size:13px;color:var(--mute)}
-.pts b{display:block;font-size:20px;color:var(--ink)}
-.putt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute);grid-column:1/-1}
-.putt .stepper button{width:38px;height:38px;font-size:18px}
-.putt .stepper b{font-size:18px}
-/* tables */
+.pts b{display:block;font:700 24px/1 var(--num);color:var(--ink)}
+.putt{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--mute);grid-column:1/-1}
+.putt .stepper button{width:44px;height:44px;font-size:20px}
+.putt .stepper b{font-size:24px}
+/* tableaux */
 .scroll{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
-th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
-th{font-size:12px;color:var(--mute);font-weight:600}
+table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th{font-size:13px;color:var(--mute);font-weight:500}
 td.l,th.l{text-align:left}
-td input{width:52px;min-height:38px;padding:6px;text-align:center}
-.under{color:#1d8a3c;font-weight:700}.over2{color:var(--red)}
-.bar{height:8px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
-.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--fw)}
-.warn{background:#fff4d6;color:#5c4400;border-radius:10px;padding:10px;font-size:14px;margin-bottom:10px}
-@media (prefers-color-scheme:dark){.warn{background:#3a3010;color:#ffe8a6}}
-#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#14211b;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;transition:.25s;z-index:50;max-width:90vw;text-align:center;pointer-events:none}
+td input{width:54px;min-height:40px;padding:6px;text-align:center}
+.under{color:var(--ok);font-weight:700}.over2{color:var(--bad)}
+.bar{height:6px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink)}
+.warn{background:var(--warnbg);color:var(--warnink);border-radius:12px;padding:12px;font-size:15px;margin-bottom:12px}
+#toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);background:var(--ink);color:var(--card);padding:11px 16px;border-radius:12px;font-size:16px;opacity:0;transition:.2s;z-index:50;max-width:90vw;text-align:center;pointer-events:none}
 #toast.on{opacity:1;transform:translateX(-50%)}
-#modal{position:fixed;inset:0;background:#000a;z-index:40;display:none;align-items:flex-end;justify-content:center}
+#modal{position:fixed;inset:0;background:#0009;z-index:40;display:none;align-items:flex-end;justify-content:center}
 #modal.on{display:flex}
-#modal .sheet{background:var(--card);width:100%;max-width:640px;max-height:85vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
-.spin{width:22px;height:22px;border:3px solid #fff6;border-top-color:#fff;border-radius:50%;animation:sp 1s linear infinite;display:inline-block}
+#modal .sheet{background:var(--card);width:100%;max-width:640px;max-height:85vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(16px + env(safe-area-inset-bottom))}
+.spin{width:20px;height:20px;border:3px solid var(--line);border-top-color:var(--ink);border-radius:50%;animation:sp 1s linear infinite;display:inline-block;vertical-align:-4px}
 @keyframes sp{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.spin{animation:none}#toast{transition:none}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}#toast{transition:none}.btn:active,.clubs button:active{transform:none}}
 input[type=file]{display:none}
 </style>
 </head>
@@ -375,13 +406,13 @@ V.home = () => {
   let h = '';
   if (live) {
     const c = course(live.courseId);
-    h += `<section class="card hero"><p class="k">Partie en cours</p><h2>${esc(c ? c.name : 'Parcours')}</h2>
-      <p>Trou ${live.hole + 1} · ${live.players.map(p => esc(p.name)).join(', ')}</p>
-      <button class="btn y big" onclick="G.go('play')">Reprendre la partie</button></section>`;
+    h += `<section class="card hero"><h2>${esc(c ? c.name : 'Parcours')}</h2>
+      <p class="mute">Partie en cours, trou ${live.hole + 1}, avec ${live.players.map(p => esc(p.name)).join(', ')}.</p>
+      <button class="btn y big" onclick="G.go('play')">Reprendre au trou ${live.hole + 1}</button></section>`;
   } else {
-    h += `<section class="card hero"><p class="k">Prêt à jouer</p><h2>Nouvelle partie</h2>
-      <p>Le parcours est proposé automatiquement si tu es déjà venu.</p>
-      <button class="btn y big" onclick="G.newRound()">Commencer</button></section>`;
+    h += `<section class="card hero"><h2>Nouvelle partie</h2>
+      <p class="mute">Le golf où tu te trouves est proposé automatiquement.</p>
+      <button class="btn y big" onclick="G.newRound()">Commencer une partie</button></section>`;
   }
   if (!S.courses.length) h += `<section class="card"><h3>Première fois ?</h3><p class="mute">Ajoute un parcours : cherche les golfs autour de toi sur OpenStreetMap, puis photographie la carte de score pour remplir les distances.</p><button class="btn wide" onclick="G.tab('courses')">Ajouter un parcours</button></section>`;
   const done = S.rounds.filter(r => r.status === 'done').slice(-3).reverse();
@@ -392,7 +423,7 @@ V.home = () => {
 function roundLine(r) {
   const c = course(r.courseId); if (!c) return '';
   const t = totals(c, r.players[0]);
-  return `<a href="#" onclick="G.go('round','${r.id}');return false"><span><b>${esc(c.name)}</b><br><small>${fmtDate(r.date)} · ${r.players.length} joueur${r.players.length > 1 ? 's' : ''}</small></span><span style="text-align:right"><b>${t.brut || '-'}</b> <small>(${signed(t.toPar)})</small><br><small>${t.sn} pts stableford</small></span></a>`;
+  return `<a href="#" onclick="G.go('round','${r.id}');return false"><span><b>${esc(c.name)}</b><br><small>${fmtDate(r.date)} · ${r.players.length} joueur${r.players.length > 1 ? 's' : ''}</small></span><span style="text-align:right">${t.played ? `<b>${t.brut}</b> <small>(${signed(t.toPar)})</small><br><small>${t.sn} pts stableford</small>` : '<small>Aucun score</small>'}</span></a>`;
 }
 
 /* ---------- preparation de la partie ---------- */
@@ -501,10 +532,10 @@ function remaining(x, from) {
 V.play = () => {
   const x = ctx(); if (!x) return `<p>Aucune partie en cours.</p><button class="btn" onclick="G.tab('home')">Accueil</button>`;
   const {r, c, h, me} = x;
-  return `<section class="holebar"><button class="nav" onclick="G.hole(-1)" ${x.i === 0 ? 'disabled' : ''}>&#8249;</button>
-    <div><div class="hn">Trou ${x.i + 1}</div><div class="hm">Par ${h.par || '-'} · HCP ${h.hcp || '-'}${x.len ? ' · ' + x.len + ' m' : ''} <span class="dot" style="background:${teeHex(me.tee)};vertical-align:-1px"></span></div></div>
-    <button class="nav" onclick="G.hole(1)" ${x.i === c.holes.length - 1 ? 'disabled' : ''}>&#8250;</button></section>
-  <section class="card" id="live"></section>
+  return `<section class="holebar"><button class="nav" onclick="G.hole(-1)" aria-label="Trou précédent" ${x.i === 0 ? 'disabled' : ''}>&#8249;</button>
+    <div><div class="hn">Trou ${x.i + 1}</div><dl class="hstats"><div><dt>Par</dt><dd>${h.par || '-'}</dd></div><div><dt>HCP</dt><dd>${h.hcp || '-'}</dd></div>${x.len ? `<div><dt><span class="dot" style="background:${teeHex(me.tee)}" title="Départ ${esc(me.tee)}"></span></dt><dd>${x.len} m</dd></div>` : ''}</dl></div>
+    <button class="nav" onclick="G.hole(1)" aria-label="Trou suivant" ${x.i === c.holes.length - 1 ? 'disabled' : ''}>&#8250;</button></section>
+  <section class="card live" id="live"></section>
   <section class="actions" id="actions"></section>
   <section class="card"><div class="row between" style="margin-bottom:8px"><h3 style="margin:0">Club du prochain coup</h3><small id="clubhint"></small></div><div class="clubs" id="clubs"></div></section>
   <section class="card" id="hview"></section>
@@ -513,52 +544,72 @@ V.play = () => {
 };
 AFTER.play = () => { if (!ctx()) return; GPS.start(); wake(); renderLive(); renderActions(); renderClubs(); renderHoleView(); renderScores(); };
 
+// a plus de 1,5 km du trou, on n'est pas en train de le jouer : pas de distance ni de conseil
+const FAR = 1500;
+function farFrom(x) {
+  const ref = x.green || x.tee;
+  if (!x.cur || !ref) return null;
+  const d = hav(x.cur, ref); return d > FAR ? d : null;
+}
+function remNow(x) { return farFrom(x) ? null : remaining(x); }
 function renderLive() {
   const el = $('#live'), x = ctx(); if (!el || !x) return;
-  const rem = remaining(x);
-  let h = '<div class="live"><div>';
-  if (rem) {
-    h += `<div class="bigd">${Math.round(rem.d)}<small> m</small></div><div class="fb">${rem.est ? 'estimé (green non positionné)' : 'au centre du green'}</div>`;
-    if (rem.front != null) h += `<div class="fb">Avant <b>${Math.round(rem.front)}</b> · Fond <b>${Math.round(rem.back)}</b></div>`;
-  } else h += `<div class="fb">${x.cur ? 'Distance inconnue : renseigne la longueur du trou ou place le green.' : (GPS.err || 'Recherche du signal GPS...')}</div>`;
-  if (x.last && x.cur) h += `<div class="fb" style="margin-top:6px">Depuis ta dernière position : <b>${Math.round(hav(x.last, x.cur))}</b> m</div>`;
-  h += '</div>';
-  const rc = recommend(rem ? rem.d : null);
-  h += rc ? `<div class="adv"><small>Conseil</small><b>${esc(rc.name)}</b><small>${rc.dist ? rc.dist + ' m' : 'sur le green'}</small></div>` : '<div></div>';
-  el.innerHTML = h + '</div>';
+  const far = farFrom(x), rem = remNow(x);
+  let h = '';
+  if (far) {
+    h = `<div class="far"><b>${far < 10000 ? (far / 1000).toFixed(1).replace('.', ',') : Math.round(far / 1000)} km</b><span>Hors du parcours. Les distances s'affichent quand tu es sur le trou ${x.i + 1}.</span></div>`;
+  } else if (rem) {
+    const fb = (label, v) => `<div class="fbk"><span>${label}</span><b>${Math.round(v)}</b></div>`;
+    h = '<div class="dist">' + (rem.back != null ? fb('Fond', rem.back) : '')
+      + `<div class="mid"><b class="bigd">${Math.round(rem.d)}</b><span>${rem.est ? 'mètres, estimé (green non positionné)' : 'mètres au centre du green'}</span></div>`
+      + (rem.front != null ? fb('Avant', rem.front) : '') + '</div>';
+    const rc = recommend(rem.d);
+    const last = x.last && x.cur ? `<span>Dernier point<b>${Math.round(hav(x.last, x.cur))} m</b></span>` : '<span></span>';
+    if (rc) h += `<div class="advrow"><span>Conseil<b>${esc(rc.name)}</b></span>${last}</div>`;
+  } else h = `<div class="wait">${x.cur ? 'Distance inconnue : renseigne la longueur du trou ou place le green.' : esc(GPS.err || 'Recherche du signal GPS...')}</div>`;
+  el.innerHTML = h;
 }
 function renderActions() {
   const el = $('#actions'), x = ctx(); if (!el || !x) return;
   const n = x.st.shots.length;
   const main = (!x.st.start && !n)
     ? `<button class="btn y" onclick="G.atTee()">Je suis au départ</button>`
-    : `<button class="btn y" onclick="G.ball()">Ma balle est ici<br><small style="font-weight:400;color:#333">coup ${n + 1}</small></button>`;
+    : `<button class="btn y" onclick="G.ball()"><span>Ma balle est ici<small>coup ${n + 1}</small></span></button>`;
   el.innerHTML = main + `<button class="btn ghost" onclick="G.markGreen()">${x.green ? 'Corriger green' : 'Green ici'}</button>`
     + (n ? `<button class="btn ghost sm" style="grid-column:1/-1" onclick="G.undo()">Annuler le dernier coup (${esc(x.st.shots[n - 1].cn)} · ${x.st.shots[n - 1].dist} m)</button>` : '');
 }
 function renderClubs() {
   const el = $('#clubs'), x = ctx(); if (!el || !x) return;
-  const rem = remaining(x), rc = recommend(rem ? rem.d : null);
+  const rem = remNow(x), rc = recommend(rem ? rem.d : null);
   el.innerHTML = S.profile.clubs.map(c => `<button class="${x.r.club === c.id ? 'on' : ''} ${rc && rc.id === c.id ? 'rec' : ''}" onclick="G.club('${c.id}')">${esc(c.name)}<small>${c.dist ? c.dist + ' m' : ' '}</small></button>`).join('');
   const sel = clubById(x.r.club);
   $('#clubhint').textContent = sel ? 'Choisi : ' + sel.name : (rc ? 'Auto : ' + rc.name : '');
 }
 G.club = id => { const r = liveRound(); r.club = r.club === id ? null : id; save.rounds(); renderClubs(); };
 G.hole = d => { const r = liveRound(), c = course(r.courseId); r.hole = Math.max(0, Math.min(c.holes.length - 1, r.hole + d)); r.club = null; save.rounds(); render(); window.scrollTo(0, 0); };
+// refuse d'enregistrer une position a plus de 1,5 km du trou (test a la maison, GPS aberrant)
+function tooFar(x, p, ref = x.green || x.tee || x.last) {
+  if (!ref) return false;
+  const d = hav(p, ref); if (d <= FAR) return false;
+  toast('Tu es à ' + (d / 1000).toFixed(1).replace('.', ',') + ' km du trou ' + (x.i + 1) + ' : position non enregistrée', 3800);
+  return true;
+}
 G.atTee = async () => {
   try {
     const p = await fix(), x = ctx();
+    if (tooFar(x, p)) return;
     x.st.start = pt(p);
     if (!x.h.tee) { x.h.tee = pt(p); }
     if (x.i === 0 && !x.c.lat) { x.c.lat = p.lat; x.c.lng = p.lng; }
     await save.rounds(); await save.courses();
     toast(p.acc > 25 ? 'Départ enregistré (GPS peu précis : ±' + Math.round(p.acc) + ' m)' : 'Départ enregistré');
-    renderLive(); renderActions(); renderHoleView();
+    renderLive(); renderActions(); renderClubs(); renderHoleView();
   } catch (e) { toast(e.message); }
 };
 G.ball = async () => {
   try {
     const p = await fix(), x = ctx();
+    if (tooFar(x, p)) return;
     const from = x.last || x.h.tee;
     if (!from) { x.st.start = pt(p); await save.rounds(); toast('Position de départ enregistrée'); return renderActions(); }
     const rem = remaining(x, from);
@@ -574,6 +625,7 @@ G.undo = async () => { const x = ctx(); x.st.shots.pop(); await save.rounds(); r
 G.markGreen = async () => {
   try {
     const p = await fix(), x = ctx();
+    if (tooFar(x, p, x.tee || x.last)) return; // pas le green : il peut etre faux, c'est justement ce qu'on corrige
     if (x.green && !confirm('Remplacer la position du green de ce trou par ta position actuelle ?')) return;
     x.h.green = pt(p); await save.courses();
     toast('Green enregistré pour les prochaines parties'); renderLive(); renderClubs(); renderActions(); renderHoleView();
@@ -606,7 +658,7 @@ function holeSVG(x) {
   const A = x.tee, B = x.green;
   const pts = [A, B, ...x.st.shots.map(s => s.to), x.st.start].filter(Boolean);
   if (x.cur && (!pts.length || pts.some(p => hav(p, x.cur) < 700))) pts.push(x.cur);
-  if (!pts.length) return `<svg viewBox="0 0 ${W} ${H}"><text x="170" y="200" fill="#fff" font-size="15" text-anchor="middle">Pas encore de données pour ce trou.</text><text x="170" y="224" fill="#d6ead9" font-size="13" text-anchor="middle">Importe le parcours depuis OpenStreetMap</text><text x="170" y="244" fill="#d6ead9" font-size="13" text-anchor="middle">ou appuie sur « Je suis au départ ».</text></svg>`;
+  if (!pts.length) return `<svg viewBox="0 0 ${W} ${H}"><text class="lbl soft" x="170" y="200" font-size="16" text-anchor="middle">Pas encore de données pour ce trou.</text><text class="lbl soft" x="170" y="224" font-size="14" text-anchor="middle">Ajoute le parcours depuis l'onglet Parcours</text><text class="lbl soft" x="170" y="244" font-size="14" text-anchor="middle">ou appuie sur « Je suis au départ ».</text></svg>`;
   const O = pts[0], L = localXY(O);
   let th = 0;
   if (A && B) { const [gx, gy] = L(B), [ax, ay] = L(A); th = Math.atan2(gx - ax, gy - ay); }
@@ -622,32 +674,31 @@ function holeSVG(x) {
   const T = p => { const [a, b] = R(p); return [ox + (a - x0) * s, H - (oy + (b - y0) * s)]; };
   proj = {O, ct, sn, s, x0, y0, ox, oy, H};
   const f2 = v => v.toFixed(1);
-  let g = `<rect width="${W}" height="${H}" fill="#2f6b3a"/>`;
+  let g = `<rect class="rough" width="${W}" height="${H}"/>`;
   if (x.c.osm) {
     const mid = A && B ? {lat: (A.lat + B.lat) / 2, lng: (A.lng + B.lng) / 2} : O;
     const radius = (A && B ? hav(A, B) / 2 : 250) + 90;
-    const col = {fairway: '#5fae55', water: '#4a9fd8', bunker: '#ecdcaa', tee: '#86c97a', green: '#8fe07a', rough: '#3d7d45'};
     const order = ['rough', 'fairway', 'water', 'tee', 'bunker', 'green'];
     const feats = x.c.osm.features.filter(f => f.p.some(q => hav({lat: q[0], lng: q[1]}, mid) < radius));
     feats.sort((a, b) => order.indexOf(a.t) - order.indexOf(b.t));
-    for (const f of feats) g += `<polygon points="${f.p.map(q => T({lat: q[0], lng: q[1]}).map(f2).join(',')).join(' ')}" fill="${col[f.t] || '#5fae55'}" stroke="#0002" stroke-width="1"/>`;
+    for (const f of feats) g += `<polygon class="${order.includes(f.t) ? f.t : 'fairway'}" points="${f.p.map(q => T({lat: q[0], lng: q[1]}).map(f2).join(',')).join(' ')}"/>`;
   }
-  if (A && B) { const [a1, a2] = T(A), [b1, b2] = T(B); g += `<line x1="${f2(a1)}" y1="${f2(a2)}" x2="${f2(b1)}" y2="${f2(b2)}" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-dasharray="6 6"/>`; }
-  if (A) { const [a, b] = T(A); g += `<rect x="${f2(a - 7)}" y="${f2(b - 5)}" width="14" height="10" rx="2" fill="${teeHex(x.me.tee)}" stroke="#000" stroke-opacity=".5"/>`; }
-  if (B) { const [a, b] = T(B); g += `<line x1="${f2(a)}" y1="${f2(b)}" x2="${f2(a)}" y2="${f2(b - 30)}" stroke="#fff" stroke-width="2.5"/><path d="M${f2(a)} ${f2(b - 30)}l18 6-18 7z" fill="#ffd23f"/><circle cx="${f2(a)}" cy="${f2(b)}" r="3.5" fill="#111"/>`; }
+  if (A && B) { const [a1, a2] = T(A), [b1, b2] = T(B); g += `<line class="aim" x1="${f2(a1)}" y1="${f2(a2)}" x2="${f2(b1)}" y2="${f2(b2)}" stroke-width="1.5" stroke-dasharray="5 6"/>`; }
+  if (A) { const [a, b] = T(A); g += `<rect x="${f2(a - 7)}" y="${f2(b - 5)}" width="14" height="10" rx="2" fill="${teeHex(x.me.tee)}" stroke="#000" stroke-opacity=".6"/>`; }
+  if (B) { const [a, b] = T(B); g += `<line class="shot" x1="${f2(a)}" y1="${f2(b)}" x2="${f2(a)}" y2="${f2(b - 30)}" stroke-width="2"/><path d="M${f2(a)} ${f2(b - 30)}l17 6-17 7z" fill="var(--flag)"/><circle cx="${f2(a)}" cy="${f2(b)}" r="3" fill="#000"/>`; }
   let prev = x.st.start || A;
   x.st.shots.forEach((sh, k) => {
     const [a1, a2] = T(sh.from || prev), [b1, b2] = T(sh.to);
-    g += `<line x1="${f2(a1)}" y1="${f2(a2)}" x2="${f2(b1)}" y2="${f2(b2)}" stroke="#ffd23f" stroke-width="3"/><circle cx="${f2(b1)}" cy="${f2(b2)}" r="6" fill="#fff" stroke="#111" stroke-width="1.5"/>`;
+    g += `<line class="shot" x1="${f2(a1)}" y1="${f2(a2)}" x2="${f2(b1)}" y2="${f2(b2)}" stroke-width="2.5"/><circle cx="${f2(b1)}" cy="${f2(b2)}" r="5.5" fill="#fff" stroke="#000" stroke-width="2"/>`;
     const lx = (a1 + b1) / 2, ly = (a2 + b2) / 2, tx = lx > W - 110 ? lx - 8 : lx + 8;
-    g += `<text x="${f2(tx)}" y="${f2(ly)}" fill="#fff" stroke="#123" stroke-width="3" paint-order="stroke" font-size="13" font-weight="700" text-anchor="${lx > W - 110 ? 'end' : 'start'}">${k + 1}. ${esc(sh.cn)} ${sh.dist} m</text>`;
+    g += `<text class="lbl" x="${f2(tx)}" y="${f2(ly)}" font-size="15" text-anchor="${lx > W - 110 ? 'end' : 'start'}">${esc(sh.cn)} ${sh.dist} m</text>`;
     prev = sh.to;
   });
   if (x.cur) {
     const [a, b] = T(x.cur);
-    if (B) { const [c1, c2] = T(B), d = Math.round(hav(x.cur, B)); g += `<line x1="${f2(a)}" y1="${f2(b)}" x2="${f2(c1)}" y2="${f2(c2)}" stroke="#9fd0ff" stroke-width="1.5" stroke-dasharray="3 5"/><text x="${f2((a + c1) / 2 - 8)}" y="${f2((b + c2) / 2)}" fill="#fff" stroke="#123" stroke-width="3" paint-order="stroke" font-size="15" font-weight="800" text-anchor="end">${d} m</text>`; }
+    if (B) { const [c1, c2] = T(B), d = Math.round(hav(x.cur, B)); g += `<line x1="${f2(a)}" y1="${f2(b)}" x2="${f2(c1)}" y2="${f2(c2)}" stroke="var(--acc)" stroke-width="2" stroke-dasharray="2 5" stroke-linecap="round"/><text class="lbl" x="${f2((a + c1) / 2 - 9)}" y="${f2((b + c2) / 2)}" font-size="19" text-anchor="end">${d} m</text>`; }
     const acc = Math.min(60, (x.cur.acc || 0) * s);
-    g += `<circle cx="${f2(a)}" cy="${f2(b)}" r="${f2(Math.max(acc, 9))}" fill="#1f6fd1" fill-opacity=".18"/><circle cx="${f2(a)}" cy="${f2(b)}" r="8" fill="#1f6fd1" stroke="#fff" stroke-width="3"/>`;
+    g += `<circle cx="${f2(a)}" cy="${f2(b)}" r="${f2(Math.max(acc, 9))}" fill="var(--acc)" fill-opacity=".16"/><circle cx="${f2(a)}" cy="${f2(b)}" r="8" fill="var(--acc)" stroke="#fff" stroke-width="3"/>`;
   }
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${g}</svg>`;
 }
@@ -938,7 +989,7 @@ G.addOsmGolf = async k => {
   const g = window._golfs[k];
   const c = {id: uid(), name: g.name, city: g.city || '', lat: g.lat, lng: g.lng, center: {lat: g.lat, lng: g.lng}, holes: blankHoles(18), tees: [{color: 'Jaune', slope: 113, sss: 72, par: 72}], osm: null};
   S.courses.push(c); await save.courses();
-  modal(`<h3>${esc(g.name)}</h3><p>Import des trous depuis OpenStreetMap... <span class="spin" style="border-color:#8886;border-top-color:var(--g2)"></span></p>`);
+  modal(`<h3>${esc(g.name)}</h3><p>Import des trous depuis OpenStreetMap... <span class="spin"></span></p>`);
   let msg;
   try { msg = await importOsm(c); } catch (e) { msg = 'Import OSM impossible : ' + e.message; }
   await save.courses(); G.closeModal(); go('course', {id: c.id}); toast(msg, 5000);

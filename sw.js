@@ -1,4 +1,4 @@
-const C = 'caddie-v2';
+const C = 'caddie-v3';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './golfs-gironde.json'];
 const JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 
@@ -26,7 +26,8 @@ self.addEventListener('fetch', e => {
     );
     return;
   }
-  if (u.hostname === 'cdnjs.cloudflare.com') {
+  // jsPDF et polices Barlow : cache d'abord, pour fonctionner sans reseau sur le parcours
+  if (u.hostname === 'cdnjs.cloudflare.com' || u.hostname === 'fonts.googleapis.com' || u.hostname === 'fonts.gstatic.com') {
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
       const cp = res.clone();
       caches.open(C).then(c => c.put(e.request, cp));
