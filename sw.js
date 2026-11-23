@@ -1,4 +1,4 @@
-const C = 'caddie-v4';
+const C = 'caddie-v5';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './golfs-gironde.json'];
 const JSPDF = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 
